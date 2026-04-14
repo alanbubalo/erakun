@@ -5,6 +5,7 @@ use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
 use App\Models\InvoiceLine;
 use App\Models\Taxpayer;
+use Illuminate\Support\Carbon;
 
 it('belongs to a supplier', function () {
     $supplier = Taxpayer::factory()->create();
@@ -50,6 +51,6 @@ it('casts issue_date to a date', function () {
 
     $fresh = $invoice->fresh();
 
-    expect($fresh->issue_date)->toBeInstanceOf(\Illuminate\Support\Carbon::class)
+    expect($fresh->issue_date)->toBeInstanceOf(Carbon::class)
         ->and($fresh->issue_date->toDateString())->toBe('2026-01-15');
 });
