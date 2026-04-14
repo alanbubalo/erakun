@@ -2,7 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use App\Models\Invoice;
+use App\Models\InvoiceLine;
+use App\Models\Taxpayer;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -10,16 +12,28 @@ class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Create a set of taxpayers (mix of VAT registered and not)
+        $taxpayers = Taxpayer::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Generate invoices between random pairs of taxpayers
+        $taxpayers->each(function (Taxpayer $supplier) use ($taxpayers) {
+            $buyers = $taxpayers->where('id', '!=', $supplier->id)->random(rand(1, 3));
+
+            $buyers->each(function (Taxpayer $buyer) use ($supplier) {
+                $invoice = Invoice::factory()
+                    ->for($supplier, 'supplier')
+                    ->for($buyer, 'buyer')
+                    ->create();
+
+                // Each invoice gets 1-5 lines, then update total
+                $lines = InvoiceLine::factory(rand(1, 5))
+                    ->for($invoice)
+                    ->create();
+
+                $invoice->update(['total_amount' => $lines->sum('line_total')]);
+            });
+        });
     }
 }
