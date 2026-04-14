@@ -7,11 +7,11 @@ use App\Models\Taxpayer;
 
 it('creates an invoice with lines', function () {
     $supplier = Taxpayer::factory()->create(['oib' => '12345678903']);
-    $buyer = Taxpayer::factory()->create(['oib' => '98765432109']);
+    $buyer = Taxpayer::factory()->create(['oib' => '98765432106']);
 
     $response = $this->postJson('/api/invoices', [
         'supplier_oib' => '12345678903',
-        'buyer_oib' => '98765432109',
+        'buyer_oib' => '98765432106',
         'invoice_number' => 'RN-2026-00042',
         'issue_date' => '2026-04-14',
         'direction' => 'outbound',
@@ -26,7 +26,7 @@ it('creates an invoice with lines', function () {
             'data' => [
                 'invoice_number' => 'RN-2026-00042',
                 'supplier' => ['oib' => '12345678903', 'name' => $supplier->name],
-                'buyer' => ['oib' => '98765432109', 'name' => $buyer->name],
+                'buyer' => ['oib' => '98765432106', 'name' => $buyer->name],
                 'issue_date' => '2026-04-14',
                 'status' => 'draft',
                 'direction' => 'outbound',
@@ -40,11 +40,11 @@ it('creates an invoice with lines', function () {
 
 it('computes line totals and total amount', function () {
     Taxpayer::factory()->create(['oib' => '12345678903']);
-    Taxpayer::factory()->create(['oib' => '98765432109']);
+    Taxpayer::factory()->create(['oib' => '98765432106']);
 
     $response = $this->postJson('/api/invoices', [
         'supplier_oib' => '12345678903',
-        'buyer_oib' => '98765432109',
+        'buyer_oib' => '98765432106',
         'invoice_number' => 'RN-001',
         'issue_date' => '2026-04-14',
         'direction' => 'outbound',
@@ -63,11 +63,11 @@ it('computes line totals and total amount', function () {
 });
 
 it('rejects invoice with unknown supplier oib', function () {
-    Taxpayer::factory()->create(['oib' => '98765432109']);
+    Taxpayer::factory()->create(['oib' => '98765432106']);
 
     $response = $this->postJson('/api/invoices', [
-        'supplier_oib' => '00000000000',
-        'buyer_oib' => '98765432109',
+        'supplier_oib' => '55555555551',
+        'buyer_oib' => '98765432106',
         'invoice_number' => 'RN-001',
         'issue_date' => '2026-04-14',
         'direction' => 'outbound',
@@ -82,11 +82,11 @@ it('rejects invoice with unknown supplier oib', function () {
 
 it('rejects invoice with no lines', function () {
     Taxpayer::factory()->create(['oib' => '12345678903']);
-    Taxpayer::factory()->create(['oib' => '98765432109']);
+    Taxpayer::factory()->create(['oib' => '98765432106']);
 
     $response = $this->postJson('/api/invoices', [
         'supplier_oib' => '12345678903',
-        'buyer_oib' => '98765432109',
+        'buyer_oib' => '98765432106',
         'invoice_number' => 'RN-001',
         'issue_date' => '2026-04-14',
         'direction' => 'outbound',
@@ -99,11 +99,11 @@ it('rejects invoice with no lines', function () {
 
 it('rejects line with non-positive quantity', function () {
     Taxpayer::factory()->create(['oib' => '12345678903']);
-    Taxpayer::factory()->create(['oib' => '98765432109']);
+    Taxpayer::factory()->create(['oib' => '98765432106']);
 
     $response = $this->postJson('/api/invoices', [
         'supplier_oib' => '12345678903',
-        'buyer_oib' => '98765432109',
+        'buyer_oib' => '98765432106',
         'invoice_number' => 'RN-001',
         'issue_date' => '2026-04-14',
         'direction' => 'outbound',

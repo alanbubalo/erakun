@@ -11,7 +11,7 @@ Route::get('/', function () {
 });
 
 Route::post('/taxpayers', [TaxpayerController::class, 'store']);
-Route::get('/taxpayers/{oib}', [TaxpayerController::class, 'show']);
+Route::get('/taxpayers/{taxpayer}', [TaxpayerController::class, 'show']);
 
 Route::post('/invoices', [InvoiceController::class, 'store']);
 Route::get('/invoices', [InvoiceController::class, 'index']);

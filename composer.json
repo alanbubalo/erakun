@@ -54,7 +54,7 @@
             "./vendor/bin/pint"
         ],
         "analyse": [
-            "./vendor/bin/phpstan analyse"
+            "./vendor/bin/phpstan analyse --memory-limit=256M"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",

@@ -12,6 +12,11 @@ class Taxpayer extends Model
     /** @use HasFactory<TaxpayerFactory> */
     use HasFactory;
 
+    public function getRouteKeyName(): string
+    {
+        return 'oib';
+    }
+
     protected $fillable = [
         'oib',
         'name',

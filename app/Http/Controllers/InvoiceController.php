@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Actions\CreateInvoice;
 use App\Enums\InvoiceStatus;
+use App\Http\Requests\ListInvoicesRequest;
 use App\Http\Requests\StoreInvoiceRequest;
 use App\Http\Requests\UpdateInvoiceStatusRequest;
 use App\Http\Resources\InvoiceResource;
 use App\Models\Invoice;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Validation\ValidationException;
 
 class InvoiceController extends Controller
 {
@@ -23,34 +24,34 @@ class InvoiceController extends Controller
             ->setStatusCode(201);
     }
 
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(ListInvoicesRequest $request): AnonymousResourceCollection
     {
         $query = Invoice::with('supplier', 'buyer', 'lines')
             ->when(
-                $request->has('status'),
-                fn ($q) => $q->where('status', $request->input('status')),
+                $request->validated('status'),
+                fn ($q, $status) => $q->where('status', $status),
             )
             ->when(
-                $request->has('direction'),
-                fn ($q) => $q->where('direction', $request->input('direction')),
+                $request->validated('direction'),
+                fn ($q, $direction) => $q->where('direction', $direction),
             )
             ->when(
-                $request->has('supplier_oib'),
-                fn ($q) => $q->whereHas(
+                $request->validated('supplier_oib'),
+                fn ($q, $oib) => $q->whereHas(
                     'supplier',
-                    fn ($q) => $q->where('oib', $request->input('supplier_oib'))
+                    fn ($q) => $q->where('oib', $oib)
                 )
             )
             ->when(
-                $request->has('buyer_oib'),
-                fn ($q) => $q->whereHas(
+                $request->validated('buyer_oib'),
+                fn ($q, $oib) => $q->whereHas(
                     'buyer',
-                    fn ($q) => $q->where('oib', $request->input('buyer_oib'))
+                    fn ($q) => $q->where('oib', $oib)
                 )
             )
             ->latest();
 
-        return InvoiceResource::collection($query->get());
+        return InvoiceResource::collection($query->paginate());
     }
 
     public function show(Invoice $invoice): InvoiceResource
@@ -63,9 +64,9 @@ class InvoiceController extends Controller
         $targetStatus = InvoiceStatus::from($request->validated('status'));
 
         if (! $invoice->status->canTransitionTo($targetStatus)) {
-            return response()->json([
-                'message' => "Cannot transition from {$invoice->status->value} to {$targetStatus->value}.",
-            ], 422);
+            throw ValidationException::withMessages([
+                'status' => "Cannot transition from {$invoice->status->value} to {$targetStatus->value}.",
+            ]);
         }
 
         $invoice->update(['status' => $targetStatus]);

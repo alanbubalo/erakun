@@ -6,7 +6,11 @@ use App\Models\Invoice;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin Invoice */
+/**
+ * @mixin Invoice
+ *
+ * @property \DateTimeInterface $issue_date
+ */
 class InvoiceResource extends JsonResource
 {
     /**
@@ -17,15 +21,9 @@ class InvoiceResource extends JsonResource
         return [
             'id' => $this->id,
             'invoice_number' => $this->invoice_number,
-            'supplier' => [
-                'oib' => $this->supplier->oib,
-                'name' => $this->supplier->name,
-            ],
-            'buyer' => [
-                'oib' => $this->buyer->oib,
-                'name' => $this->buyer->name,
-            ],
-            'issue_date' => $this->issue_date->toDateString(),
+            'supplier' => TaxpayerResource::make($this->supplier),
+            'buyer' => TaxpayerResource::make($this->buyer),
+            'issue_date' => $this->issue_date->format('Y-m-d'),
             'status' => $this->status->value,
             'direction' => $this->direction->value,
             'total_amount' => $this->total_amount,

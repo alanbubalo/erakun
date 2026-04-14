@@ -18,10 +18,8 @@ class TaxpayerController extends Controller
             ->setStatusCode(201);
     }
 
-    public function show(string $oib): TaxpayerResource
+    public function show(Taxpayer $taxpayer): TaxpayerResource
     {
-        $taxpayer = Taxpayer::where('oib', $oib)->firstOrFail();
-
         return TaxpayerResource::make($taxpayer);
     }
 }
