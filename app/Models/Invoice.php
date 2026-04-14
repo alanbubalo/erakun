@@ -9,7 +9,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property Carbon $issue_date
+ * @property InvoiceStatus $status
+ * @property InvoiceDirection $direction
+ * @property string $total_amount
+ */
 class Invoice extends Model
 {
     /** @use HasFactory<InvoiceFactory> */

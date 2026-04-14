@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\TaxpayerController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -7,3 +9,11 @@ Route::get('/', function () {
         'message' => 'Welcome to eRakun API',
     ]);
 });
+
+Route::post('/taxpayers', [TaxpayerController::class, 'store']);
+Route::get('/taxpayers/{oib}', [TaxpayerController::class, 'show']);
+
+Route::post('/invoices', [InvoiceController::class, 'store']);
+Route::get('/invoices', [InvoiceController::class, 'index']);
+Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);
+Route::patch('/invoices/{invoice}/status', [InvoiceController::class, 'updateStatus']);
