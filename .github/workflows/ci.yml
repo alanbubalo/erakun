@@ -20,6 +20,12 @@ jobs:
           extensions: mbstring, sqlite3
           coverage: none
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
 
@@ -28,6 +34,12 @@ jobs:
 
       - name: Run static analysis
         run: ./vendor/bin/phpstan analyse
+
+      - name: Install validation schemas (Saxon-HE)
+        run: php artisan schema:install
+
+      - name: Compile Schematron to XSLT
+        run: php artisan schema:compile
 
       - name: Run tests
         run: ./vendor/bin/pest
