@@ -2,21 +2,18 @@
 
 namespace App\Providers;
 
+use App\Validation\UblValidator;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
-        //
+        $this->app->singleton(UblValidator::class, fn () => new UblValidator(
+            schemasPath: resource_path('schemas'),
+        ));
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
         //
