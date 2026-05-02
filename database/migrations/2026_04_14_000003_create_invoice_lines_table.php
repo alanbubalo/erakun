@@ -15,6 +15,10 @@ return new class extends Migration
             $table->decimal('quantity', 10, 3);
             $table->decimal('unit_price', 12, 2);
             $table->decimal('line_total', 12, 2);
+            $table->decimal('vat_rate', 5, 2);
+            $table->string('vat_category', 1);
+            $table->string('unit_code', 3)->default('H87');
+            $table->string('kpd_code', 6)->nullable();
             $table->timestamps();
         });
     }

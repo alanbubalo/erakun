@@ -27,12 +27,26 @@ class DatabaseSeeder extends Seeder
                     ->for($buyer, 'buyer')
                     ->create();
 
-                // Each invoice gets 1-5 lines, then update total
+                // Each invoice gets 1-5 lines, then update totals
                 $lines = InvoiceLine::factory(rand(1, 5))
                     ->for($invoice)
                     ->create();
 
-                $invoice->update(['total_amount' => $lines->sum('line_total')]);
+                $netAmount = (string) $lines->sum('line_total');
+                $taxAmount = '0.00';
+                foreach ($lines as $line) {
+                    $taxAmount = bcadd(
+                        $taxAmount,
+                        bcdiv(bcmul((string) $line->line_total, (string) $line->vat_rate, 4), '100', 2),
+                        2
+                    );
+                }
+
+                $invoice->update([
+                    'net_amount' => $netAmount,
+                    'tax_amount' => $taxAmount,
+                    'total_amount' => bcadd($netAmount, $taxAmount, 2),
+                ]);
             });
         });
     }

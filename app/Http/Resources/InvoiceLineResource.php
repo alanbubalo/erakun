@@ -19,6 +19,10 @@ class InvoiceLineResource extends JsonResource
             'quantity' => $this->quantity,
             'unit_price' => $this->unit_price,
             'line_total' => $this->line_total,
+            'vat_rate' => $this->vat_rate,
+            'vat_category' => $this->vat_category->value,
+            'unit_code' => $this->unit_code,
+            'kpd_code' => $this->kpd_code,
         ];
     }
 }

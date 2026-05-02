@@ -10,6 +10,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @mixin Invoice
  *
  * @property \DateTimeInterface $issue_date
+ * @property \DateTimeInterface|null $due_date
  */
 class InvoiceResource extends JsonResource
 {
@@ -24,8 +25,12 @@ class InvoiceResource extends JsonResource
             'supplier' => TaxpayerResource::make($this->supplier),
             'buyer' => TaxpayerResource::make($this->buyer),
             'issue_date' => $this->issue_date->format('Y-m-d'),
+            'due_date' => $this->due_date?->format('Y-m-d'),
             'status' => $this->status->value,
             'direction' => $this->direction->value,
+            'currency' => $this->currency,
+            'net_amount' => $this->net_amount,
+            'tax_amount' => $this->tax_amount,
             'total_amount' => $this->total_amount,
             'lines' => InvoiceLineResource::collection($this->whenLoaded('lines')),
         ];

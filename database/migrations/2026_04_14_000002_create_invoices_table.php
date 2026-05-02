@@ -14,9 +14,14 @@ return new class extends Migration
             $table->foreignId('buyer_id')->constrained('taxpayers');
             $table->string('invoice_number');
             $table->date('issue_date');
+            $table->date('due_date')->nullable();
             $table->string('status');
             $table->string('direction');
+            $table->string('currency', 3)->default('EUR');
+            $table->decimal('net_amount', 12, 2);
+            $table->decimal('tax_amount', 12, 2);
             $table->decimal('total_amount', 12, 2);
+            $table->text('ubl_xml')->nullable();
             $table->timestamps();
         });
     }

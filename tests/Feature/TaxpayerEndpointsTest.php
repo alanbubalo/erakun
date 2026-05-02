@@ -7,6 +7,11 @@ it('registers a taxpayer', function () {
         'oib' => '12345678903',
         'name' => 'Salon Ljepota d.o.o.',
         'is_vat_registered' => true,
+        'address_line' => 'Ilica 1',
+        'city' => 'Zagreb',
+        'postcode' => '10000',
+        'country_code' => 'HR',
+        'iban' => 'HR1210010051863000160',
     ]);
 
     $response->assertStatus(201)
@@ -15,22 +20,32 @@ it('registers a taxpayer', function () {
                 'oib' => '12345678903',
                 'name' => 'Salon Ljepota d.o.o.',
                 'is_vat_registered' => true,
+                'address_line' => 'Ilica 1',
+                'city' => 'Zagreb',
+                'postcode' => '10000',
+                'country_code' => 'HR',
+                'iban' => 'HR1210010051863000160',
             ],
         ]);
 
     $this->assertDatabaseHas('taxpayers', ['oib' => '12345678903']);
 });
 
-it('defaults is_vat_registered to false', function () {
+it('defaults is_vat_registered to false and country_code to HR', function () {
     $response = $this->postJson('/api/taxpayers', [
         'oib' => '12345678903',
         'name' => 'Test d.o.o.',
+        'address_line' => 'Ilica 1',
+        'city' => 'Zagreb',
+        'postcode' => '10000',
     ]);
 
     $response->assertStatus(201)
         ->assertJson([
             'data' => [
                 'is_vat_registered' => false,
+                'country_code' => 'HR',
+                'iban' => null,
             ],
         ]);
 });
@@ -41,6 +56,9 @@ it('rejects duplicate oib', function () {
     $response = $this->postJson('/api/taxpayers', [
         'oib' => '12345678903',
         'name' => 'Another Company',
+        'address_line' => 'Ilica 1',
+        'city' => 'Zagreb',
+        'postcode' => '10000',
     ]);
 
     $response->assertStatus(422)
@@ -51,6 +69,9 @@ it('rejects invalid oib format', function () {
     $response = $this->postJson('/api/taxpayers', [
         'oib' => '123',
         'name' => 'Bad OIB',
+        'address_line' => 'Ilica 1',
+        'city' => 'Zagreb',
+        'postcode' => '10000',
     ]);
 
     $response->assertStatus(422)
@@ -60,10 +81,36 @@ it('rejects invalid oib format', function () {
 it('requires name', function () {
     $response = $this->postJson('/api/taxpayers', [
         'oib' => '12345678903',
+        'address_line' => 'Ilica 1',
+        'city' => 'Zagreb',
+        'postcode' => '10000',
     ]);
 
     $response->assertStatus(422)
         ->assertJsonValidationErrors('name');
+});
+
+it('requires address_line, city, and postcode', function () {
+    $response = $this->postJson('/api/taxpayers', [
+        'oib' => '12345678903',
+        'name' => 'Test d.o.o.',
+    ]);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['address_line', 'city', 'postcode']);
+});
+
+it('rejects postcode that is not 5 characters', function () {
+    $response = $this->postJson('/api/taxpayers', [
+        'oib' => '12345678903',
+        'name' => 'Test d.o.o.',
+        'address_line' => 'Ilica 1',
+        'city' => 'Zagreb',
+        'postcode' => '123',
+    ]);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors('postcode');
 });
 
 it('shows a taxpayer by oib', function () {

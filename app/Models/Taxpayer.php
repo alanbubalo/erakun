@@ -21,6 +21,16 @@ class Taxpayer extends Model
         'oib',
         'name',
         'is_vat_registered',
+        'address_line',
+        'city',
+        'postcode',
+        'country_code',
+        'iban',
+    ];
+
+    protected $attributes = [
+        'is_vat_registered' => false,
+        'country_code' => 'HR',
     ];
 
     protected function casts(): array

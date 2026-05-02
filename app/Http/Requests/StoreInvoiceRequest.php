@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\InvoiceDirection;
+use App\Enums\VatCategory;
 use App\Models\Taxpayer;
 use App\Rules\Oib;
 use Illuminate\Foundation\Http\FormRequest;
@@ -28,11 +29,17 @@ class StoreInvoiceRequest extends FormRequest
                 ),
             ],
             'issue_date' => ['required', 'date'],
+            'due_date' => ['sometimes', 'nullable', 'date', 'after_or_equal:issue_date'],
             'direction' => ['required', Rule::enum(InvoiceDirection::class)],
+            'currency' => ['sometimes', 'string', 'size:3'],
             'lines' => ['required', 'array', 'min:1'],
             'lines.*.description' => ['required', 'string', 'max:255'],
             'lines.*.quantity' => ['required', 'numeric', 'gt:0'],
             'lines.*.unit_price' => ['required', 'numeric', 'gt:0'],
+            'lines.*.vat_rate' => ['required', 'numeric', 'min:0', 'max:100'],
+            'lines.*.vat_category' => ['required', Rule::enum(VatCategory::class)],
+            'lines.*.unit_code' => ['sometimes', 'string', 'size:3'],
+            'lines.*.kpd_code' => ['required', 'string', 'size:6'],
         ];
     }
 }

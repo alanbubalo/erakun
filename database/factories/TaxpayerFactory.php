@@ -16,6 +16,11 @@ class TaxpayerFactory extends Factory
             'oib' => $this->generateOib(),
             'name' => fake()->company(),
             'is_vat_registered' => fake()->boolean(70),
+            'address_line' => fake()->streetAddress(),
+            'city' => fake()->city(),
+            'postcode' => fake()->numerify('#####'),
+            'country_code' => 'HR',
+            'iban' => fake()->iban('HR'),
         ];
     }
 

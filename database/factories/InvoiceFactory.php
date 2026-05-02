@@ -15,14 +15,22 @@ class InvoiceFactory extends Factory
 {
     public function definition(): array
     {
+        $issueDate = fake()->dateTimeBetween('-6 months');
+        $netAmount = fake()->randomFloat(2, 100, 50000);
+        $taxAmount = round($netAmount * 0.25, 2);
+
         return [
             'supplier_id' => Taxpayer::factory(),
             'buyer_id' => Taxpayer::factory(),
             'invoice_number' => fake()->unique()->numerify('EINV-####-####'),
-            'issue_date' => fake()->dateTimeBetween('-6 months'),
+            'issue_date' => $issueDate,
+            'due_date' => fake()->dateTimeBetween($issueDate, '+30 days'),
             'status' => fake()->randomElement(InvoiceStatus::cases()),
             'direction' => fake()->randomElement(InvoiceDirection::cases()),
-            'total_amount' => fake()->randomFloat(2, 100, 50000),
+            'currency' => 'EUR',
+            'net_amount' => $netAmount,
+            'tax_amount' => $taxAmount,
+            'total_amount' => round($netAmount + $taxAmount, 2),
         ];
     }
 
@@ -34,6 +42,11 @@ class InvoiceFactory extends Factory
     public function delivered(): static
     {
         return $this->state(['status' => InvoiceStatus::Delivered]);
+    }
+
+    public function received(): static
+    {
+        return $this->state(['status' => InvoiceStatus::Received]);
     }
 
     public function outbound(): static

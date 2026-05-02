@@ -19,6 +19,11 @@ class TaxpayerResource extends JsonResource
             'oib' => $this->oib,
             'name' => $this->name,
             'is_vat_registered' => $this->is_vat_registered,
+            'address_line' => $this->address_line,
+            'city' => $this->city,
+            'postcode' => $this->postcode,
+            'country_code' => $this->country_code,
+            'iban' => $this->iban,
         ];
     }
 }

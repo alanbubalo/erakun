@@ -13,6 +13,11 @@ return new class extends Migration
             $table->string('oib', 11)->unique();
             $table->string('name');
             $table->boolean('is_vat_registered')->default(false);
+            $table->string('address_line');
+            $table->string('city');
+            $table->string('postcode', 5);
+            $table->string('country_code', 2)->default('HR');
+            $table->string('iban')->nullable();
             $table->timestamps();
         });
     }
