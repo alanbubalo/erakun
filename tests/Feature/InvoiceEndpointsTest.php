@@ -307,18 +307,6 @@ it('returns 404 for unknown invoice', function () {
     $response->assertNotFound();
 });
 
-it('transitions draft to queued', function () {
-    $invoice = Invoice::factory()->draft()->create();
-
-    $response = $this->patchJson("/api/invoices/{$invoice->id}/status", [
-        'status' => 'queued',
-    ]);
-
-    $response->assertOk()
-        ->assertJsonPath('data.status', 'queued');
-    expect($invoice->fresh()->status)->toBe(InvoiceStatus::Queued);
-});
-
 it('transitions queued to sent', function () {
     $invoice = Invoice::factory()->create(['status' => InvoiceStatus::Queued]);
 

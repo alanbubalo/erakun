@@ -16,4 +16,5 @@ Route::get('/taxpayers/{taxpayer}', [TaxpayerController::class, 'show']);
 Route::post('/invoices', [InvoiceController::class, 'store']);
 Route::get('/invoices', [InvoiceController::class, 'index']);
 Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);
+Route::get('/invoices/{invoice}/xml', [InvoiceController::class, 'xml']);
 Route::patch('/invoices/{invoice}/status', [InvoiceController::class, 'updateStatus']);
