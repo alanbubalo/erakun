@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Actions\CreateInvoice;
 use App\Actions\InvoiceSigner;
+use App\Actions\ReceiveInbound;
 use App\Actions\UblGenerator;
+use App\Actions\UblParser;
 use App\Enums\InvoiceDirection;
 use App\Enums\InvoiceStatus;
 use App\Exceptions\InvoiceValidationException;
@@ -15,6 +17,7 @@ use App\Http\Resources\InvoiceResource;
 use App\Models\Invoice;
 use App\Validation\UblValidator;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Validation\ValidationException;
 
@@ -90,6 +93,27 @@ class InvoiceController extends Controller
         return InvoiceResource::make($invoice->load('supplier', 'buyer', 'lines'))
             ->response()
             ->setStatusCode(200);
+    }
+
+    public function inbound(
+        Request $request,
+        UblValidator $validator,
+        UblParser $parser,
+        ReceiveInbound $action,
+    ): JsonResponse {
+        $rawXml = $request->getContent();
+
+        $report = $validator->validate($rawXml);
+        if (! $report->isValid()) {
+            throw new InvoiceValidationException($report);
+        }
+
+        $parsed = $parser->parse($rawXml);
+        $invoice = $action->execute($parsed, $rawXml);
+
+        return InvoiceResource::make($invoice)
+            ->response()
+            ->setStatusCode($invoice->wasRecentlyCreated ? 201 : 200);
     }
 
     public function xml(Invoice $invoice, UblGenerator $generator)

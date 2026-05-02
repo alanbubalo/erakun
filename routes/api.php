@@ -14,6 +14,7 @@ Route::post('/taxpayers', [TaxpayerController::class, 'store']);
 Route::get('/taxpayers/{taxpayer}', [TaxpayerController::class, 'show']);
 
 Route::post('/invoices', [InvoiceController::class, 'store']);
+Route::post('/invoices/inbound', [InvoiceController::class, 'inbound']);
 Route::get('/invoices', [InvoiceController::class, 'index']);
 Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);
 Route::get('/invoices/{invoice}/xml', [InvoiceController::class, 'xml']);
