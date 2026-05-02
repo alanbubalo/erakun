@@ -35,10 +35,26 @@ jobs:
       - name: Run static analysis
         run: ./vendor/bin/phpstan analyse
 
+      - name: Cache Saxon-HE jars
+        id: cache-saxon
+        uses: actions/cache@v4
+        with:
+          path: resources/schemas/saxon
+          key: saxon-${{ hashFiles('app/Console/Commands/InstallSchemas.php') }}
+
       - name: Install validation schemas (Saxon-HE)
+        if: steps.cache-saxon.outputs.cache-hit != 'true'
         run: php artisan schema:install
 
+      - name: Cache compiled Schematron XSLTs
+        id: cache-compiled
+        uses: actions/cache@v4
+        with:
+          path: resources/schemas/compiled
+          key: schematron-${{ hashFiles('resources/schemas/en16931/**', 'resources/schemas/hr-cius/**', 'resources/schemas/skeleton/**', 'app/Console/Commands/CompileSchematron.php') }}
+
       - name: Compile Schematron to XSLT
+        if: steps.cache-compiled.outputs.cache-hit != 'true'
         run: php artisan schema:compile
 
       - name: Run tests

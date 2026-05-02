@@ -78,7 +78,7 @@ class CompileSchematron extends Command
      */
     private function saxon(string $classpath, string $source, string $xsl, string $out, array $params = []): void
     {
-        $result = Process::run([
+        $result = Process::timeout(600)->run([
             'java', '-cp', $classpath, 'net.sf.saxon.Transform',
             '-s:'.$source, '-xsl:'.$xsl, '-o:'.$out,
             ...$params,
