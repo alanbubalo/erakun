@@ -1,15 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Validation;
 
-final class ValidationIssue
+final readonly class ValidationIssue
 {
     public function __construct(
-        public readonly string $source,
-        public readonly string $rule,
-        public readonly string $severity,
-        public readonly string $message,
-        public readonly ?string $location = null,
+        public string $source,
+        public string $rule,
+        public string $severity,
+        public string $message,
+        public ?string $location = null,
     ) {}
 
     /**

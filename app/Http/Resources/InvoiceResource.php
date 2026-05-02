@@ -3,14 +3,15 @@
 namespace App\Http\Resources;
 
 use App\Models\Invoice;
+use DateTimeInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * @mixin Invoice
  *
- * @property \DateTimeInterface $issue_date
- * @property \DateTimeInterface|null $due_date
+ * @property DateTimeInterface $issue_date
+ * @property DateTimeInterface|null $due_date
  */
 class InvoiceResource extends JsonResource
 {

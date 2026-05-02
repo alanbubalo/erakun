@@ -280,10 +280,10 @@ class UblGenerator
                     'tax' => '0.00',
                 ];
             }
-            $groups[$key]['taxable'] = bcadd($groups[$key]['taxable'], $line->line_total, 2);
+            $groups[$key]['taxable'] = bcadd($groups[$key]['taxable'], (string) $line->line_total, 2);
             $groups[$key]['tax'] = bcadd(
                 $groups[$key]['tax'],
-                bcdiv(bcmul($line->line_total, (string) $line->vat_rate, 4), '100', 2),
+                bcdiv(bcmul((string) $line->line_total, (string) $line->vat_rate, 4), '100', 2),
                 2,
             );
         }

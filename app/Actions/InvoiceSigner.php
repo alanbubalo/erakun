@@ -6,6 +6,7 @@ use DOMDocument;
 use DOMElement;
 use DOMXPath;
 use RobRichards\XMLSecLibs\XMLSecurityDSig;
+use RuntimeException;
 
 class InvoiceSigner
 {
@@ -45,9 +46,7 @@ class InvoiceSigner
         $nodes = $xpath->query('//ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/*/sac:SignatureInformation');
         $node = $nodes === false ? null : $nodes->item(0);
 
-        if (! $node instanceof DOMElement) {
-            throw new \RuntimeException('Invoice is missing the sac:SignatureInformation placeholder.');
-        }
+        throw_unless($node instanceof DOMElement, RuntimeException::class, 'Invoice is missing the sac:SignatureInformation placeholder.');
 
         return $node;
     }
@@ -56,9 +55,7 @@ class InvoiceSigner
     {
         $canonical = $dom->documentElement?->C14N(exclusive: false, withComments: false);
 
-        if ($canonical === null || $canonical === false) {
-            throw new \RuntimeException('Failed to canonicalize invoice for digest.');
-        }
+        throw_if($canonical === null || $canonical === false, RuntimeException::class, 'Failed to canonicalize invoice for digest.');
 
         return base64_encode(hash('sha256', $canonical, binary: true));
     }

@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
+use RuntimeException;
 
 class CompileSchematron extends Command
 {
@@ -87,7 +88,7 @@ class CompileSchematron extends Command
         if (! $result->successful()) {
             $this->error('Saxon failed transforming '.basename($source).' via '.basename($xsl));
             $this->line($result->errorOutput() ?: $result->output());
-            throw new \RuntimeException('Saxon transform failed');
+            throw new RuntimeException('Saxon transform failed');
         }
     }
 }

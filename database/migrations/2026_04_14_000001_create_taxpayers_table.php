@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('taxpayers', function (Blueprint $table) {
+        Schema::create('taxpayers', function (Blueprint $table): void {
             $table->id();
             $table->string('oib', 11)->unique();
             $table->string('name');

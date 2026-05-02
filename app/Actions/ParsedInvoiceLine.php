@@ -1,19 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions;
 
 use App\Enums\VatCategory;
 
-final class ParsedInvoiceLine
+final readonly class ParsedInvoiceLine
 {
     public function __construct(
-        public readonly string $description,
-        public readonly string $quantity,
-        public readonly string $unitPrice,
-        public readonly string $lineTotal,
-        public readonly string $vatRate,
-        public readonly VatCategory $vatCategory,
-        public readonly string $unitCode,
-        public readonly ?string $kpdCode,
+        public string $description,
+        public string $quantity,
+        public string $unitPrice,
+        public string $lineTotal,
+        public string $vatRate,
+        public VatCategory $vatCategory,
+        public string $unitCode,
+        public ?string $kpdCode,
     ) {}
 }

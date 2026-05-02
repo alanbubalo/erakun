@@ -4,9 +4,9 @@ use App\Actions\InvoiceSigner;
 use App\Actions\UblGenerator;
 use Tests\Fixtures\InvoiceFixture;
 
-it('embeds a digest that matches the canonicalized invoice body', function () {
-    $unsigned = app(UblGenerator::class)->execute(InvoiceFixture::outbound());
-    $signed = app(InvoiceSigner::class)->execute($unsigned);
+it('embeds a digest that matches the canonicalized invoice body', function (): void {
+    $unsigned = resolve(UblGenerator::class)->execute(InvoiceFixture::outbound());
+    $signed = resolve(InvoiceSigner::class)->execute($unsigned);
 
     $xpath = new DOMXPath($signed);
     $xpath->registerNamespace('ds', 'http://www.w3.org/2000/09/xmldsig#');
@@ -27,9 +27,9 @@ it('embeds a digest that matches the canonicalized invoice body', function () {
     expect($embedded)->toBe($recomputed);
 });
 
-it('places a structurally-real ds:Signature inside ext:UBLExtensions with stub key info', function () {
-    $unsigned = app(UblGenerator::class)->execute(InvoiceFixture::outbound());
-    $signed = app(InvoiceSigner::class)->execute($unsigned);
+it('places a structurally-real ds:Signature inside ext:UBLExtensions with stub key info', function (): void {
+    $unsigned = resolve(UblGenerator::class)->execute(InvoiceFixture::outbound());
+    $signed = resolve(InvoiceSigner::class)->execute($unsigned);
 
     $xpath = new DOMXPath($signed);
     $xpath->registerNamespace('ds', 'http://www.w3.org/2000/09/xmldsig#');

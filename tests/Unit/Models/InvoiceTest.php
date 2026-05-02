@@ -7,28 +7,28 @@ use App\Models\InvoiceLine;
 use App\Models\Taxpayer;
 use Illuminate\Support\Carbon;
 
-it('belongs to a supplier', function () {
+it('belongs to a supplier', function (): void {
     $supplier = Taxpayer::factory()->create();
     $invoice = Invoice::factory()->for($supplier, 'supplier')->create();
 
     expect($invoice->supplier->id)->toBe($supplier->id);
 });
 
-it('belongs to a buyer', function () {
+it('belongs to a buyer', function (): void {
     $buyer = Taxpayer::factory()->create();
     $invoice = Invoice::factory()->for($buyer, 'buyer')->create();
 
     expect($invoice->buyer->id)->toBe($buyer->id);
 });
 
-it('has many lines', function () {
+it('has many lines', function (): void {
     $invoice = Invoice::factory()->create();
     InvoiceLine::factory(3)->for($invoice)->create();
 
     expect($invoice->lines)->toHaveCount(3);
 });
 
-it('casts status to InvoiceStatus enum', function () {
+it('casts status to InvoiceStatus enum', function (): void {
     $invoice = Invoice::factory()->draft()->create();
 
     $fresh = $invoice->fresh();
@@ -37,7 +37,7 @@ it('casts status to InvoiceStatus enum', function () {
         ->and($fresh->status)->toBeInstanceOf(InvoiceStatus::class);
 });
 
-it('casts direction to InvoiceDirection enum', function () {
+it('casts direction to InvoiceDirection enum', function (): void {
     $invoice = Invoice::factory()->outbound()->create();
 
     $fresh = $invoice->fresh();
@@ -46,7 +46,7 @@ it('casts direction to InvoiceDirection enum', function () {
         ->and($fresh->direction)->toBeInstanceOf(InvoiceDirection::class);
 });
 
-it('casts issue_date to a date', function () {
+it('casts issue_date to a date', function (): void {
     $invoice = Invoice::factory()->create(['issue_date' => '2026-01-15']);
 
     $fresh = $invoice->fresh();

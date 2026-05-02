@@ -2,7 +2,7 @@
 
 use App\Models\Taxpayer;
 
-it('registers a taxpayer', function () {
+it('registers a taxpayer', function (): void {
     $response = $this->postJson('/api/taxpayers', [
         'oib' => '12345678903',
         'name' => 'Salon Ljepota d.o.o.',
@@ -31,7 +31,7 @@ it('registers a taxpayer', function () {
     $this->assertDatabaseHas('taxpayers', ['oib' => '12345678903']);
 });
 
-it('defaults is_vat_registered to false and country_code to HR', function () {
+it('defaults is_vat_registered to false and country_code to HR', function (): void {
     $response = $this->postJson('/api/taxpayers', [
         'oib' => '12345678903',
         'name' => 'Test d.o.o.',
@@ -50,7 +50,7 @@ it('defaults is_vat_registered to false and country_code to HR', function () {
         ]);
 });
 
-it('rejects duplicate oib', function () {
+it('rejects duplicate oib', function (): void {
     Taxpayer::factory()->create(['oib' => '12345678903']);
 
     $response = $this->postJson('/api/taxpayers', [
@@ -65,7 +65,7 @@ it('rejects duplicate oib', function () {
         ->assertJsonValidationErrors('oib');
 });
 
-it('rejects invalid oib format', function () {
+it('rejects invalid oib format', function (): void {
     $response = $this->postJson('/api/taxpayers', [
         'oib' => '123',
         'name' => 'Bad OIB',
@@ -78,7 +78,7 @@ it('rejects invalid oib format', function () {
         ->assertJsonValidationErrors('oib');
 });
 
-it('requires name', function () {
+it('requires name', function (): void {
     $response = $this->postJson('/api/taxpayers', [
         'oib' => '12345678903',
         'address_line' => 'Ilica 1',
@@ -90,7 +90,7 @@ it('requires name', function () {
         ->assertJsonValidationErrors('name');
 });
 
-it('requires address_line, city, and postcode', function () {
+it('requires address_line, city, and postcode', function (): void {
     $response = $this->postJson('/api/taxpayers', [
         'oib' => '12345678903',
         'name' => 'Test d.o.o.',
@@ -100,7 +100,7 @@ it('requires address_line, city, and postcode', function () {
         ->assertJsonValidationErrors(['address_line', 'city', 'postcode']);
 });
 
-it('rejects postcode that is not 5 characters', function () {
+it('rejects postcode that is not 5 characters', function (): void {
     $response = $this->postJson('/api/taxpayers', [
         'oib' => '12345678903',
         'name' => 'Test d.o.o.',
@@ -113,7 +113,7 @@ it('rejects postcode that is not 5 characters', function () {
         ->assertJsonValidationErrors('postcode');
 });
 
-it('shows a taxpayer by oib', function () {
+it('shows a taxpayer by oib', function (): void {
     $taxpayer = Taxpayer::factory()->create(['oib' => '12345678903']);
 
     $response = $this->getJson('/api/taxpayers/12345678903');
@@ -127,7 +127,7 @@ it('shows a taxpayer by oib', function () {
         ]);
 });
 
-it('returns 404 for unknown oib', function () {
+it('returns 404 for unknown oib', function (): void {
     $response = $this->getJson('/api/taxpayers/00000000000');
 
     $response->assertNotFound();

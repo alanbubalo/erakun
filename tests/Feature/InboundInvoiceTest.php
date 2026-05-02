@@ -11,7 +11,7 @@ use Tests\Fixtures\InvoiceFixture;
 function buildSignedInboundXml(): string
 {
     $invoice = InvoiceFixture::outbound();
-    $signed = app(InvoiceSigner::class)->execute(app(UblGenerator::class)->execute($invoice));
+    $signed = resolve(InvoiceSigner::class)->execute(resolve(UblGenerator::class)->execute($invoice));
     $xml = $signed->saveXML();
 
     Invoice::query()->delete();
@@ -33,7 +33,7 @@ function postInboundXml(string $xml)
     );
 }
 
-it('persists a fresh inbound invoice and auto-creates the supplier (201)', function () {
+it('persists a fresh inbound invoice and auto-creates the supplier (201)', function (): void {
     $xml = buildSignedInboundXml();
 
     $response = postInboundXml($xml);
@@ -55,7 +55,7 @@ it('persists a fresh inbound invoice and auto-creates the supplier (201)', funct
     expect(Taxpayer::where('oib', '22222222226')->exists())->toBeTrue();
 });
 
-it('returns 200 on idempotent re-receipt without duplicating the invoice', function () {
+it('returns 200 on idempotent re-receipt without duplicating the invoice', function (): void {
     $xml = buildSignedInboundXml();
 
     postInboundXml($xml)->assertStatus(201);
@@ -67,7 +67,7 @@ it('returns 200 on idempotent re-receipt without duplicating the invoice', funct
     expect(Invoice::where('invoice_number', 'RN-2026-00001')->count())->toBe(1);
 });
 
-it('rejects inbound XML when buyer OIB is unknown (422)', function () {
+it('rejects inbound XML when buyer OIB is unknown (422)', function (): void {
     $xml = buildSignedInboundXml();
     Taxpayer::where('oib', '11111111119')->delete();
 
@@ -81,7 +81,7 @@ it('rejects inbound XML when buyer OIB is unknown (422)', function () {
     expect(Invoice::where('invoice_number', 'RN-2026-00001')->exists())->toBeFalse();
 });
 
-it('rejects malformed XML with a validation_report (422)', function () {
+it('rejects malformed XML with a validation_report (422)', function (): void {
     $response = postInboundXml('<not-an-invoice/>');
 
     $response->assertStatus(422)

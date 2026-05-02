@@ -3,14 +3,14 @@
 use App\Models\Invoice;
 use App\Models\InvoiceLine;
 
-it('belongs to an invoice', function () {
+it('belongs to an invoice', function (): void {
     $invoice = Invoice::factory()->create();
     $line = InvoiceLine::factory()->for($invoice)->create();
 
     expect($line->invoice->id)->toBe($invoice->id);
 });
 
-it('casts decimal fields correctly', function () {
+it('casts decimal fields correctly', function (): void {
     $line = InvoiceLine::factory()->create([
         'quantity' => 2.500,
         'unit_price' => 100.00,
@@ -24,7 +24,7 @@ it('casts decimal fields correctly', function () {
         ->and($fresh->line_total)->toBe('250.00');
 });
 
-it('is deleted when its invoice is deleted', function () {
+it('is deleted when its invoice is deleted', function (): void {
     $invoice = Invoice::factory()->create();
     InvoiceLine::factory(2)->for($invoice)->create();
 

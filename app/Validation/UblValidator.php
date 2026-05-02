@@ -2,7 +2,10 @@
 
 namespace App\Validation;
 
+use DOMDocument;
+use DOMElement;
 use Illuminate\Support\Facades\Process;
+use RuntimeException;
 
 class UblValidator
 {
@@ -42,7 +45,7 @@ class UblValidator
         $previous = libxml_use_internal_errors(true);
         libxml_clear_errors();
 
-        $dom = new \DOMDocument;
+        $dom = new DOMDocument;
         $loaded = $dom->loadXML($xml, LIBXML_NONET);
 
         if (! $loaded) {
@@ -89,9 +92,7 @@ class UblValidator
     private function runSchematron(string $xmlPath, string $name): array
     {
         $xsl = $this->schemasPath.'/compiled/'.$name.'.xsl';
-        if (! is_file($xsl)) {
-            throw new \RuntimeException("Compiled validator missing: $xsl. Run: php artisan schema:compile");
-        }
+        throw_unless(is_file($xsl), RuntimeException::class, "Compiled validator missing: $xsl. Run: php artisan schema:compile");
 
         $svrlPath = tempnam(sys_get_temp_dir(), 'erakun-svrl-').'.xml';
 
@@ -102,7 +103,7 @@ class UblValidator
             ]);
 
             if (! $result->successful()) {
-                throw new \RuntimeException("Saxon failed validating against $name.xsl: ".($result->errorOutput() ?: $result->output()));
+                throw new RuntimeException("Saxon failed validating against $name.xsl: ".($result->errorOutput() ?: $result->output()));
             }
 
             return $this->parseSvrl(file_get_contents($svrlPath) ?: '', 'schematron');
@@ -121,7 +122,7 @@ class UblValidator
         }
 
         $previous = libxml_use_internal_errors(true);
-        $dom = new \DOMDocument;
+        $dom = new DOMDocument;
         $dom->loadXML($svrl, LIBXML_NONET);
         libxml_clear_errors();
         libxml_use_internal_errors($previous);
@@ -129,7 +130,7 @@ class UblValidator
         $issues = [];
         $asserts = $dom->getElementsByTagNameNS(self::SVRL_NS, 'failed-assert');
 
-        /** @var \DOMElement $node */
+        /** @var DOMElement $node */
         foreach ($asserts as $node) {
             $rule = $node->getAttribute('id') ?: $node->getAttribute('test');
             $location = $node->getAttribute('location') ?: null;

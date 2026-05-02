@@ -8,13 +8,14 @@ use App\Exceptions\InvoiceValidationException;
 use App\Models\Invoice;
 use App\Validation\UblValidator;
 use Illuminate\Validation\ValidationException;
+use RuntimeException;
 
 class TransitionInvoiceStatus
 {
     public function __construct(
-        private UblGenerator $generator,
-        private InvoiceSigner $signer,
-        private UblValidator $validator,
+        private readonly UblGenerator $generator,
+        private readonly InvoiceSigner $signer,
+        private readonly UblValidator $validator,
     ) {}
 
     public function execute(Invoice $invoice, InvoiceStatus $target): Invoice
@@ -50,14 +51,10 @@ class TransitionInvoiceStatus
         $signed = $this->signer->execute($dom);
         $xml = $signed->saveXML();
 
-        if ($xml === false) {
-            throw new \RuntimeException('Failed to serialize signed UBL document.');
-        }
+        throw_if($xml === false, RuntimeException::class, 'Failed to serialize signed UBL document.');
 
         $report = $this->validator->validate($xml);
-        if (! $report->isValid()) {
-            throw new InvoiceValidationException($report);
-        }
+        throw_unless($report->isValid(), InvoiceValidationException::class, $report);
 
         return $xml;
     }

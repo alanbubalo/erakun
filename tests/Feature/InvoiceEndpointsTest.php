@@ -34,7 +34,7 @@ function validInvoicePayload(array $overrides = []): array
     ], $overrides);
 }
 
-it('creates an invoice with lines', function () {
+it('creates an invoice with lines', function (): void {
     $supplier = Taxpayer::factory()->create(['oib' => '12345678903']);
     $buyer = Taxpayer::factory()->create(['oib' => '98765432106']);
 
@@ -60,7 +60,7 @@ it('creates an invoice with lines', function () {
     $this->assertDatabaseCount('invoice_lines', 2);
 });
 
-it('computes net, tax, and gross totals from line vat rates', function () {
+it('computes net, tax, and gross totals from line vat rates', function (): void {
     Taxpayer::factory()->create(['oib' => '12345678903']);
     Taxpayer::factory()->create(['oib' => '98765432106']);
 
@@ -84,7 +84,7 @@ it('computes net, tax, and gross totals from line vat rates', function () {
         ->and($data['total_amount'])->toBe('336.50');
 });
 
-it('total_amount equals net_amount plus tax_amount (true gross)', function () {
+it('total_amount equals net_amount plus tax_amount (true gross)', function (): void {
     Taxpayer::factory()->create(['oib' => '12345678903']);
     Taxpayer::factory()->create(['oib' => '98765432106']);
 
@@ -93,11 +93,11 @@ it('total_amount equals net_amount plus tax_amount (true gross)', function () {
     $response->assertStatus(201);
     $data = $response->json('data');
 
-    $sum = bcadd($data['net_amount'], $data['tax_amount'], 2);
+    $sum = bcadd((string) $data['net_amount'], (string) $data['tax_amount'], 2);
     expect($data['total_amount'])->toBe($sum);
 });
 
-it('accepts optional currency, due_date, and unit_code', function () {
+it('accepts optional currency, due_date, and unit_code', function (): void {
     Taxpayer::factory()->create(['oib' => '12345678903']);
     Taxpayer::factory()->create(['oib' => '98765432106']);
 
@@ -123,7 +123,7 @@ it('accepts optional currency, due_date, and unit_code', function () {
         ->assertJsonPath('data.lines.0.unit_code', 'KGM');
 });
 
-it('defaults unit_code to H87 when omitted', function () {
+it('defaults unit_code to H87 when omitted', function (): void {
     Taxpayer::factory()->create(['oib' => '12345678903']);
     Taxpayer::factory()->create(['oib' => '98765432106']);
 
@@ -133,7 +133,7 @@ it('defaults unit_code to H87 when omitted', function () {
         ->assertJsonPath('data.lines.0.unit_code', 'H87');
 });
 
-it('rejects invoice with unknown supplier oib', function () {
+it('rejects invoice with unknown supplier oib', function (): void {
     Taxpayer::factory()->create(['oib' => '98765432106']);
 
     $response = $this->postJson('/api/invoices', validInvoicePayload([
@@ -144,7 +144,7 @@ it('rejects invoice with unknown supplier oib', function () {
         ->assertJsonValidationErrors('supplier_oib');
 });
 
-it('rejects invoice with no lines', function () {
+it('rejects invoice with no lines', function (): void {
     Taxpayer::factory()->create(['oib' => '12345678903']);
     Taxpayer::factory()->create(['oib' => '98765432106']);
 
@@ -154,7 +154,7 @@ it('rejects invoice with no lines', function () {
         ->assertJsonValidationErrors('lines');
 });
 
-it('rejects line with non-positive quantity', function () {
+it('rejects line with non-positive quantity', function (): void {
     Taxpayer::factory()->create(['oib' => '12345678903']);
     Taxpayer::factory()->create(['oib' => '98765432106']);
 
@@ -168,7 +168,7 @@ it('rejects line with non-positive quantity', function () {
         ->assertJsonValidationErrors('lines.0.quantity');
 });
 
-it('rejects line missing vat_rate', function () {
+it('rejects line missing vat_rate', function (): void {
     Taxpayer::factory()->create(['oib' => '12345678903']);
     Taxpayer::factory()->create(['oib' => '98765432106']);
 
@@ -182,7 +182,7 @@ it('rejects line missing vat_rate', function () {
         ->assertJsonValidationErrors('lines.0.vat_rate');
 });
 
-it('rejects line missing vat_category', function () {
+it('rejects line missing vat_category', function (): void {
     Taxpayer::factory()->create(['oib' => '12345678903']);
     Taxpayer::factory()->create(['oib' => '98765432106']);
 
@@ -196,7 +196,7 @@ it('rejects line missing vat_category', function () {
         ->assertJsonValidationErrors('lines.0.vat_category');
 });
 
-it('rejects line with invalid vat_category', function () {
+it('rejects line with invalid vat_category', function (): void {
     Taxpayer::factory()->create(['oib' => '12345678903']);
     Taxpayer::factory()->create(['oib' => '98765432106']);
 
@@ -210,7 +210,7 @@ it('rejects line with invalid vat_category', function () {
         ->assertJsonValidationErrors('lines.0.vat_category');
 });
 
-it('rejects line missing kpd_code', function () {
+it('rejects line missing kpd_code', function (): void {
     Taxpayer::factory()->create(['oib' => '12345678903']);
     Taxpayer::factory()->create(['oib' => '98765432106']);
 
@@ -224,7 +224,7 @@ it('rejects line missing kpd_code', function () {
         ->assertJsonValidationErrors('lines.0.kpd_code');
 });
 
-it('rejects due_date before issue_date', function () {
+it('rejects due_date before issue_date', function (): void {
     Taxpayer::factory()->create(['oib' => '12345678903']);
     Taxpayer::factory()->create(['oib' => '98765432106']);
 
@@ -236,7 +236,7 @@ it('rejects due_date before issue_date', function () {
         ->assertJsonValidationErrors('due_date');
 });
 
-it('lists all invoices', function () {
+it('lists all invoices', function (): void {
     $invoice = Invoice::factory()->draft()->create();
     InvoiceLine::factory(2)->for($invoice)->create();
 
@@ -246,7 +246,7 @@ it('lists all invoices', function () {
         ->assertJsonCount(1, 'data');
 });
 
-it('filters invoices by status', function () {
+it('filters invoices by status', function (): void {
     Invoice::factory()->draft()->create();
     Invoice::factory()->create(['status' => InvoiceStatus::Queued]);
 
@@ -257,7 +257,7 @@ it('filters invoices by status', function () {
     expect($response->json('data.0.status'))->toBe('draft');
 });
 
-it('filters invoices by direction', function () {
+it('filters invoices by direction', function (): void {
     Invoice::factory()->outbound()->create();
     Invoice::factory()->inbound()->create();
 
@@ -268,7 +268,7 @@ it('filters invoices by direction', function () {
     expect($response->json('data.0.direction'))->toBe('outbound');
 });
 
-it('filters invoices by supplier oib', function () {
+it('filters invoices by supplier oib', function (): void {
     $supplier = Taxpayer::factory()->create();
     Invoice::factory()->for($supplier, 'supplier')->create();
     Invoice::factory()->create();
@@ -279,7 +279,7 @@ it('filters invoices by supplier oib', function () {
         ->assertJsonCount(1, 'data');
 });
 
-it('filters invoices by buyer oib', function () {
+it('filters invoices by buyer oib', function (): void {
     $buyer = Taxpayer::factory()->create();
     Invoice::factory()->for($buyer, 'buyer')->create();
     Invoice::factory()->create();
@@ -290,7 +290,7 @@ it('filters invoices by buyer oib', function () {
         ->assertJsonCount(1, 'data');
 });
 
-it('shows a single invoice with lines', function () {
+it('shows a single invoice with lines', function (): void {
     $invoice = Invoice::factory()->draft()->create();
     InvoiceLine::factory(2)->for($invoice)->create();
 
@@ -301,13 +301,13 @@ it('shows a single invoice with lines', function () {
         ->assertJsonPath('data.id', $invoice->id);
 });
 
-it('returns 404 for unknown invoice', function () {
+it('returns 404 for unknown invoice', function (): void {
     $response = $this->getJson('/api/invoices/999');
 
     $response->assertNotFound();
 });
 
-it('transitions queued to sent', function () {
+it('transitions queued to sent', function (): void {
     $invoice = Invoice::factory()->create(['status' => InvoiceStatus::Queued]);
 
     $response = $this->patchJson("/api/invoices/{$invoice->id}/status", [
@@ -318,7 +318,7 @@ it('transitions queued to sent', function () {
         ->assertJsonPath('data.status', 'sent');
 });
 
-it('transitions sent to delivered', function () {
+it('transitions sent to delivered', function (): void {
     $invoice = Invoice::factory()->create(['status' => InvoiceStatus::Sent]);
 
     $response = $this->patchJson("/api/invoices/{$invoice->id}/status", [
@@ -329,7 +329,7 @@ it('transitions sent to delivered', function () {
         ->assertJsonPath('data.status', 'delivered');
 });
 
-it('transitions sent to rejected', function () {
+it('transitions sent to rejected', function (): void {
     $invoice = Invoice::factory()->create(['status' => InvoiceStatus::Sent]);
 
     $response = $this->patchJson("/api/invoices/{$invoice->id}/status", [
@@ -340,7 +340,7 @@ it('transitions sent to rejected', function () {
         ->assertJsonPath('data.status', 'rejected');
 });
 
-it('transitions received to delivered', function () {
+it('transitions received to delivered', function (): void {
     $invoice = Invoice::factory()->received()->create();
 
     $response = $this->patchJson("/api/invoices/{$invoice->id}/status", [
@@ -351,7 +351,7 @@ it('transitions received to delivered', function () {
         ->assertJsonPath('data.status', 'delivered');
 });
 
-it('transitions received to rejected', function () {
+it('transitions received to rejected', function (): void {
     $invoice = Invoice::factory()->received()->create();
 
     $response = $this->patchJson("/api/invoices/{$invoice->id}/status", [
@@ -362,7 +362,7 @@ it('transitions received to rejected', function () {
         ->assertJsonPath('data.status', 'rejected');
 });
 
-it('rejects invalid status transition draft to delivered', function () {
+it('rejects invalid status transition draft to delivered', function (): void {
     $invoice = Invoice::factory()->draft()->create();
 
     $response = $this->patchJson("/api/invoices/{$invoice->id}/status", [
@@ -376,7 +376,7 @@ it('rejects invalid status transition draft to delivered', function () {
     expect($invoice->fresh()->status)->toBe(InvoiceStatus::Draft);
 });
 
-it('rejects transition from terminal state', function () {
+it('rejects transition from terminal state', function (): void {
     $invoice = Invoice::factory()->delivered()->create();
 
     $response = $this->patchJson("/api/invoices/{$invoice->id}/status", [
@@ -387,7 +387,7 @@ it('rejects transition from terminal state', function () {
     expect($invoice->fresh()->status)->toBe(InvoiceStatus::Delivered);
 });
 
-it('rejects invalid status value', function () {
+it('rejects invalid status value', function (): void {
     $invoice = Invoice::factory()->draft()->create();
 
     $response = $this->patchJson("/api/invoices/{$invoice->id}/status", [

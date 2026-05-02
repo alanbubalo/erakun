@@ -1,6 +1,7 @@
 <?php
 
 use App\Validation\UblValidator;
+use App\Validation\ValidationIssue;
 use App\Validation\ValidationReport;
 
 function loadFixture(string $name): string
@@ -15,18 +16,18 @@ function loadFixture(string $name): string
 
 function ruleIds(ValidationReport $report): array
 {
-    return array_map(fn ($i) => $i->rule, $report->issues);
+    return array_map(fn (ValidationIssue $i): string => $i->rule, $report->issues);
 }
 
-it('passes the canonical valid HR-CIUS fixture with zero issues', function () {
-    $report = app(UblValidator::class)->validate(loadFixture('valid-hr-cius.xml'));
+it('passes the canonical valid HR-CIUS fixture with zero issues', function (): void {
+    $report = resolve(UblValidator::class)->validate(loadFixture('valid-hr-cius.xml'));
 
     expect($report->issues)->toBe([]);
     expect($report->isValid())->toBeTrue();
 });
 
-it('reports BR-CO-10 on the invalid fixture (line sums disagree with monetary total)', function () {
-    $report = app(UblValidator::class)->validate(loadFixture('invalid-br-co-10.xml'));
+it('reports BR-CO-10 on the invalid fixture (line sums disagree with monetary total)', function (): void {
+    $report = resolve(UblValidator::class)->validate(loadFixture('invalid-br-co-10.xml'));
 
     expect($report->isValid())->toBeFalse();
     expect(ruleIds($report))->toContain('BR-CO-10');

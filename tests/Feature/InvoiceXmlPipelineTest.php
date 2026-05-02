@@ -4,7 +4,7 @@ use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
 use Tests\Fixtures\InvoiceFixture;
 
-it('persists signed UBL XML when transitioning Draft to Queued (outbound)', function () {
+it('persists signed UBL XML when transitioning Draft to Queued (outbound)', function (): void {
     $invoice = InvoiceFixture::outbound();
 
     $response = $this->patchJson("/api/invoices/{$invoice->id}/status", [
@@ -19,7 +19,7 @@ it('persists signed UBL XML when transitioning Draft to Queued (outbound)', func
     expect($fresh->ubl_xml)->toContain('<ds:Signature');
 });
 
-it('blocks Draft to Queued and returns validation_report when generated XML is invalid', function () {
+it('blocks Draft to Queued and returns validation_report when generated XML is invalid', function (): void {
     $invoice = InvoiceFixture::outbound();
     Invoice::query()->whereKey($invoice->id)->update(['net_amount' => '999.00']);
 
@@ -35,7 +35,7 @@ it('blocks Draft to Queued and returns validation_report when generated XML is i
     expect($invoice->fresh()->ubl_xml)->toBeNull();
 });
 
-it('returns persisted XML on GET /xml for queued invoice', function () {
+it('returns persisted XML on GET /xml for queued invoice', function (): void {
     $invoice = InvoiceFixture::outbound();
     $this->patchJson("/api/invoices/{$invoice->id}/status", ['status' => 'queued'])->assertOk();
 
@@ -46,7 +46,7 @@ it('returns persisted XML on GET /xml for queued invoice', function () {
     expect($response->getContent())->toBe($invoice->fresh()->ubl_xml);
 });
 
-it('returns generated preview on GET /xml for Draft outbound invoice', function () {
+it('returns generated preview on GET /xml for Draft outbound invoice', function (): void {
     $invoice = InvoiceFixture::outbound();
 
     $response = $this->get("/api/invoices/{$invoice->id}/xml");
@@ -58,6 +58,6 @@ it('returns generated preview on GET /xml for Draft outbound invoice', function 
     expect($invoice->fresh()->ubl_xml)->toBeNull();
 });
 
-it('returns 404 on GET /xml for an unknown invoice', function () {
+it('returns 404 on GET /xml for an unknown invoice', function (): void {
     $this->get('/api/invoices/9999/xml')->assertNotFound();
 });

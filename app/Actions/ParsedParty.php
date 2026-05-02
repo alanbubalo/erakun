@@ -1,17 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions;
 
-final class ParsedParty
+final readonly class ParsedParty
 {
     public function __construct(
-        public readonly string $oib,
-        public readonly string $name,
-        public readonly string $addressLine,
-        public readonly string $city,
-        public readonly string $postcode,
-        public readonly string $countryCode,
-        public readonly bool $isVatRegistered,
-        public readonly ?string $iban = null,
+        public string $oib,
+        public string $name,
+        public string $addressLine,
+        public string $city,
+        public string $postcode,
+        public string $countryCode,
+        public bool $isVatRegistered,
+        public ?string $iban = null,
     ) {}
 }

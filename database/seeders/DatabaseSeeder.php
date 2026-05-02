@@ -18,17 +18,17 @@ class DatabaseSeeder extends Seeder
         $taxpayers = Taxpayer::factory(10)->create();
 
         // Generate invoices between random pairs of taxpayers
-        $taxpayers->each(function (Taxpayer $supplier) use ($taxpayers) {
-            $buyers = $taxpayers->where('id', '!=', $supplier->id)->random(rand(1, 3));
+        $taxpayers->each(function (Taxpayer $supplier) use ($taxpayers): void {
+            $buyers = $taxpayers->where('id', '!=', $supplier->id)->random(random_int(1, 3));
 
-            $buyers->each(function (Taxpayer $buyer) use ($supplier) {
+            $buyers->each(function (Taxpayer $buyer) use ($supplier): void {
                 $invoice = Invoice::factory()
                     ->for($supplier, 'supplier')
                     ->for($buyer, 'buyer')
                     ->create();
 
                 // Each invoice gets 1-5 lines, then update totals
-                $lines = InvoiceLine::factory(rand(1, 5))
+                $lines = InvoiceLine::factory(random_int(1, 5))
                     ->for($invoice)
                     ->create();
 

@@ -1,13 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Validation;
 
-final class ValidationReport
+final readonly class ValidationReport
 {
     /**
      * @param  list<ValidationIssue>  $issues
      */
-    public function __construct(public readonly array $issues = []) {}
+    public function __construct(public array $issues = []) {}
 
     public function isValid(): bool
     {
@@ -25,6 +27,6 @@ final class ValidationReport
      */
     public function toArray(): array
     {
-        return array_map(fn (ValidationIssue $i) => $i->toArray(), $this->issues);
+        return array_map(fn (ValidationIssue $i): array => $i->toArray(), $this->issues);
     }
 }

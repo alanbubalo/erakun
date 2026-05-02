@@ -3,7 +3,7 @@
 use App\Models\Invoice;
 use App\Models\Taxpayer;
 
-it('has supplied invoices relationship', function () {
+it('has supplied invoices relationship', function (): void {
     $taxpayer = Taxpayer::factory()->create();
     $invoice = Invoice::factory()->for($taxpayer, 'supplier')->create();
 
@@ -11,7 +11,7 @@ it('has supplied invoices relationship', function () {
         ->and($taxpayer->suppliedInvoices->first()->id)->toBe($invoice->id);
 });
 
-it('has received invoices relationship', function () {
+it('has received invoices relationship', function (): void {
     $taxpayer = Taxpayer::factory()->create();
     $invoice = Invoice::factory()->for($taxpayer, 'buyer')->create();
 
@@ -19,7 +19,7 @@ it('has received invoices relationship', function () {
         ->and($taxpayer->receivedInvoices->first()->id)->toBe($invoice->id);
 });
 
-it('casts is_vat_registered to boolean', function () {
+it('casts is_vat_registered to boolean', function (): void {
     $taxpayer = Taxpayer::factory()->vatRegistered()->create();
 
     $fresh = $taxpayer->fresh();
@@ -27,7 +27,7 @@ it('casts is_vat_registered to boolean', function () {
     expect($fresh->is_vat_registered)->toBeTrue()->toBeBool();
 });
 
-it('generates a valid 11-digit OIB via factory', function () {
+it('generates a valid 11-digit OIB via factory', function (): void {
     $taxpayer = Taxpayer::factory()->create();
 
     expect($taxpayer->oib)->toHaveLength(11)

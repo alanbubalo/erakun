@@ -5,11 +5,11 @@ use App\Actions\UblParser;
 use App\Enums\VatCategory;
 use Tests\Fixtures\InvoiceFixture;
 
-it('round-trips a factory invoice through generator and parser', function () {
+it('round-trips a factory invoice through generator and parser', function (): void {
     $invoice = InvoiceFixture::outbound();
-    $xml = app(UblGenerator::class)->execute($invoice)->saveXML();
+    $xml = resolve(UblGenerator::class)->execute($invoice)->saveXML();
 
-    $parsed = app(UblParser::class)->parse($xml);
+    $parsed = resolve(UblParser::class)->parse($xml);
 
     expect($parsed->invoiceNumber)->toBe($invoice->invoice_number);
     expect($parsed->issueDate)->toBe($invoice->issue_date->format('Y-m-d'));
@@ -47,10 +47,10 @@ it('round-trips a factory invoice through generator and parser', function () {
     expect($parsedLine->kpdCode)->toBe($sourceLine->kpd_code);
 });
 
-it('parses the canonical valid HR-CIUS fixture', function () {
+it('parses the canonical valid HR-CIUS fixture', function (): void {
     $xml = file_get_contents(__DIR__.'/../../Fixtures/ubl/valid-hr-cius.xml');
 
-    $parsed = app(UblParser::class)->parse($xml);
+    $parsed = resolve(UblParser::class)->parse($xml);
 
     expect($parsed->invoiceNumber)->toBe('RN-2026-00001');
     expect($parsed->currency)->toBe('EUR');

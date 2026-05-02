@@ -20,9 +20,7 @@ final class UblParser
     public function parse(string $xml): ParsedInvoice
     {
         $dom = new DOMDocument;
-        if (! $dom->loadXML($xml, LIBXML_NONET)) {
-            throw new RuntimeException('Failed to load UBL invoice XML.');
-        }
+        throw_unless($dom->loadXML($xml, LIBXML_NONET), RuntimeException::class, 'Failed to load UBL invoice XML.');
 
         $xpath = new DOMXPath($dom);
         $xpath->registerNamespace('inv', self::NS_INVOICE);
@@ -30,9 +28,7 @@ final class UblParser
         $xpath->registerNamespace('cbc', self::NS_CBC);
 
         $root = $dom->documentElement;
-        if (! $root instanceof DOMElement) {
-            throw new RuntimeException('UBL invoice has no document element.');
-        }
+        throw_unless($root instanceof DOMElement, RuntimeException::class, 'UBL invoice has no document element.');
 
         $supplierParty = $this->requireElement($xpath, $root, 'cac:AccountingSupplierParty/cac:Party');
         $buyerParty = $this->requireElement($xpath, $root, 'cac:AccountingCustomerParty/cac:Party');
@@ -119,9 +115,7 @@ final class UblParser
         $nodes = $xpath->query($expression, $context);
         $node = $nodes === false ? null : $nodes->item(0);
 
-        if (! $node instanceof DOMElement) {
-            throw new RuntimeException("Missing required UBL element: $expression");
-        }
+        throw_unless($node instanceof DOMElement, RuntimeException::class, "Missing required UBL element: $expression");
 
         return $node;
     }
@@ -130,9 +124,7 @@ final class UblParser
     {
         $value = $this->text($xpath, $context, $expression);
 
-        if ($value === '') {
-            throw new RuntimeException("Missing required UBL text: $expression");
-        }
+        throw_if($value === '', RuntimeException::class, "Missing required UBL text: $expression");
 
         return $value;
     }

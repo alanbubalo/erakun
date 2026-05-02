@@ -1,22 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions;
 
-final class ParsedInvoice
+final readonly class ParsedInvoice
 {
     /**
      * @param  list<ParsedInvoiceLine>  $lines
      */
     public function __construct(
-        public readonly ParsedParty $supplier,
-        public readonly ParsedParty $buyer,
-        public readonly string $invoiceNumber,
-        public readonly string $issueDate,
-        public readonly ?string $dueDate,
-        public readonly string $currency,
-        public readonly string $netAmount,
-        public readonly string $taxAmount,
-        public readonly string $totalAmount,
-        public readonly array $lines,
+        public ParsedParty $supplier,
+        public ParsedParty $buyer,
+        public string $invoiceNumber,
+        public string $issueDate,
+        public ?string $dueDate,
+        public string $currency,
+        public string $netAmount,
+        public string $taxAmount,
+        public string $totalAmount,
+        public array $lines,
     ) {}
 }

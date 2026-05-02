@@ -21,9 +21,7 @@ class InboundInvoiceController extends Controller
         $rawXml = $request->getContent();
 
         $report = $validator->validate($rawXml);
-        if (! $report->isValid()) {
-            throw new InvoiceValidationException($report);
-        }
+        throw_unless($report->isValid(), InvoiceValidationException::class, $report);
 
         $parsed = $parser->parse($rawXml);
         $invoice = $action->execute($parsed, $rawXml);

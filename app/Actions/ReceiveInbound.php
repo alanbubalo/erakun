@@ -37,7 +37,6 @@ final class ReceiveInbound
                         rule: 'buyer-not-registered',
                         severity: 'error',
                         message: "Buyer OIB {$parsed->buyer->oib} is not registered with this intermediary.",
-                        location: null,
                     ),
                 ]));
             }
