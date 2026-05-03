@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\FiscalMessageType;
 use App\Enums\InvoiceDirection;
 use App\Enums\InvoiceStatus;
 use Database\Factories\InvoiceFactory;
@@ -78,5 +79,22 @@ class Invoice extends Model
     public function lines(): HasMany
     {
         return $this->hasMany(InvoiceLine::class);
+    }
+
+    /**
+     * @return HasMany<FiscalMessage, $this>
+     */
+    public function fiscalMessages(): HasMany
+    {
+        return $this->hasMany(FiscalMessage::class);
+    }
+
+    public function latestFiscalMessageFor(string $reporterOib): ?FiscalMessage
+    {
+        return $this->fiscalMessages()
+            ->where('reporter_oib', $reporterOib)
+            ->where('message_type', FiscalMessageType::Fis)
+            ->orderByDesc('id')
+            ->first();
     }
 }
