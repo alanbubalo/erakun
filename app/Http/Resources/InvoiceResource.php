@@ -74,7 +74,7 @@ class InvoiceResource extends JsonResource
         }
 
         try {
-            return app(FiscalizationService::class)->lookupMatch(
+            return resolve(FiscalizationService::class)->lookupMatch(
                 supplierOib: $this->resource->supplier->oib,
                 buyerOib: $this->resource->buyer->oib,
                 invoiceNumber: $this->resource->invoice_number,

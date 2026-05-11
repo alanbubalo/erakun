@@ -101,9 +101,7 @@ final class InMemoryFiscalizationService implements FiscalizationService
     {
         $dom = new DOMDocument;
 
-        if (! $dom->loadXML($xml)) {
-            throw new FiscalizationServiceException('XSD_INVALID', 'Could not parse fiscalization request XML.');
-        }
+        throw_unless($dom->loadXML($xml), FiscalizationServiceException::class, 'XSD_INVALID', 'Could not parse fiscalization request XML.');
 
         $xpath = new DOMXPath($dom);
         $xpath->registerNamespace('f', self::NS);
