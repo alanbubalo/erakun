@@ -73,13 +73,11 @@ describe('fiscalize', function (): void {
 
         makeHttpService()->fiscalize('<FiscalizationRequest xmlns="urn:hr:erakun:fiscal:1.0"/>');
 
-        Http::assertSent(function (Request $request): bool {
-            return $request->url() === 'http://cis.test/fiscalize'
-                && str_contains((string) $request->header('Content-Type')[0], 'application/soap+xml')
-                && str_contains($request->body(), '<soap:Envelope')
-                && str_contains($request->body(), '<soap:Body>')
-                && str_contains($request->body(), '<FiscalizationRequest');
-        });
+        Http::assertSent(fn (Request $request): bool => $request->url() === 'http://cis.test/fiscalize'
+            && str_contains((string) $request->header('Content-Type')[0], 'application/soap+xml')
+            && str_contains($request->body(), '<soap:Envelope')
+            && str_contains($request->body(), '<soap:Body>')
+            && str_contains($request->body(), '<FiscalizationRequest'));
     });
 
     it('throws FiscalizationServiceException with the subcode on soap:Fault', function (): void {

@@ -6,11 +6,13 @@ use App\Enums\FiscalMessageType;
 use App\Enums\InvoiceDirection;
 use App\Enums\InvoiceStatus;
 use Database\Factories\InvoiceFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Override;
 
 /**
  * @property int $id
@@ -24,26 +26,26 @@ use Illuminate\Support\Carbon;
  * @property string $total_amount
  * @property string|null $ubl_xml
  */
+#[Fillable([
+    'supplier_id',
+    'buyer_id',
+    'invoice_number',
+    'issue_date',
+    'due_date',
+    'status',
+    'direction',
+    'currency',
+    'net_amount',
+    'tax_amount',
+    'total_amount',
+    'ubl_xml',
+])]
 class Invoice extends Model
 {
     /** @use HasFactory<InvoiceFactory> */
     use HasFactory;
 
-    protected $fillable = [
-        'supplier_id',
-        'buyer_id',
-        'invoice_number',
-        'issue_date',
-        'due_date',
-        'status',
-        'direction',
-        'currency',
-        'net_amount',
-        'tax_amount',
-        'total_amount',
-        'ubl_xml',
-    ];
-
+    #[Override]
     protected function casts(): array
     {
         return [

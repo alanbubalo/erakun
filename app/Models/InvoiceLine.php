@@ -4,9 +4,11 @@ namespace App\Models;
 
 use App\Enums\VatCategory;
 use Database\Factories\InvoiceLineFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Override;
 
 /**
  * @property string $description
@@ -18,23 +20,23 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $unit_code
  * @property string|null $kpd_code
  */
+#[Fillable([
+    'invoice_id',
+    'description',
+    'quantity',
+    'unit_price',
+    'line_total',
+    'vat_rate',
+    'vat_category',
+    'unit_code',
+    'kpd_code',
+])]
 class InvoiceLine extends Model
 {
     /** @use HasFactory<InvoiceLineFactory> */
     use HasFactory;
 
-    protected $fillable = [
-        'invoice_id',
-        'description',
-        'quantity',
-        'unit_price',
-        'line_total',
-        'vat_rate',
-        'vat_category',
-        'unit_code',
-        'kpd_code',
-    ];
-
+    #[Override]
     protected function casts(): array
     {
         return [

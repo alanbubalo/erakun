@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Actions\SubmitFiscalization;
 use App\Enums\FiscalMessageState;
 use App\Http\Resources\InvoiceResource;
+use App\Models\FiscalMessage;
 use App\Models\Invoice;
 use Illuminate\Http\JsonResponse;
 
@@ -18,7 +19,7 @@ class InvoiceFiscalizationController extends Controller
 
         $latest = $invoice->latestFiscalMessageFor($reporterOib);
 
-        if ($latest !== null && $latest->state === FiscalMessageState::Accepted) {
+        if ($latest instanceof FiscalMessage && $latest->state === FiscalMessageState::Accepted) {
             return new JsonResponse([
                 'message' => 'Fiscal message is already accepted.',
             ], 409);

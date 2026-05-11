@@ -10,7 +10,7 @@ use DOMElement;
 
 class FiscalMessageBuilder
 {
-    private const NS = 'urn:hr:erakun:fiscal:1.0';
+    private const string NS = 'urn:hr:erakun:fiscal:1.0';
 
     public function build(Invoice $invoice, string $reporterOib): DOMDocument
     {

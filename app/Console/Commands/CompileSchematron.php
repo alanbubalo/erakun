@@ -5,12 +5,15 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
+use Override;
 use RuntimeException;
 
 class CompileSchematron extends Command
 {
+    #[Override]
     protected $signature = 'schema:compile';
 
+    #[Override]
     protected $description = 'Compile vendored Schematron rule sets to runtime XSLT 2.0 validators via Saxon-HE.';
 
     /**

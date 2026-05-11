@@ -8,9 +8,11 @@ use App\Fiscalization\FiscalizationService;
 use App\Fiscalization\Http\HttpFiscalizationService;
 use App\Validation\UblValidator;
 use Illuminate\Support\ServiceProvider;
+use Override;
 
 class AppServiceProvider extends ServiceProvider
 {
+    #[Override]
     public function register(): void
     {
         $this->app->singleton(UblValidator::class, fn (): UblValidator => new UblValidator(

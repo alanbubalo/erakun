@@ -3,36 +3,40 @@
 namespace App\Models;
 
 use Database\Factories\TaxpayerFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Override;
 
+#[Fillable([
+    'oib',
+    'name',
+    'is_vat_registered',
+    'address_line',
+    'city',
+    'postcode',
+    'country_code',
+    'iban',
+])]
 class Taxpayer extends Model
 {
     /** @use HasFactory<TaxpayerFactory> */
     use HasFactory;
 
+    #[Override]
     public function getRouteKeyName(): string
     {
         return 'oib';
     }
 
-    protected $fillable = [
-        'oib',
-        'name',
-        'is_vat_registered',
-        'address_line',
-        'city',
-        'postcode',
-        'country_code',
-        'iban',
-    ];
-
+    #[Override]
     protected $attributes = [
         'is_vat_registered' => false,
         'country_code' => 'HR',
     ];
 
+    #[Override]
     protected function casts(): array
     {
         return [

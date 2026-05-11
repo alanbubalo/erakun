@@ -6,10 +6,12 @@ use App\Enums\FiscalMessageState;
 use App\Enums\FiscalMessageType;
 use App\Enums\MatchStatus;
 use Database\Factories\FiscalMessageFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use Override;
 
 /**
  * @property int $id
@@ -26,26 +28,26 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $submitted_at
  * @property Carbon|null $settled_at
  */
+#[Fillable([
+    'invoice_id',
+    'reporter_oib',
+    'message_type',
+    'state',
+    'service_message_id',
+    'match_status',
+    'error_code',
+    'error_message',
+    'request_xml',
+    'response_xml',
+    'submitted_at',
+    'settled_at',
+])]
 class FiscalMessage extends Model
 {
     /** @use HasFactory<FiscalMessageFactory> */
     use HasFactory;
 
-    protected $fillable = [
-        'invoice_id',
-        'reporter_oib',
-        'message_type',
-        'state',
-        'service_message_id',
-        'match_status',
-        'error_code',
-        'error_message',
-        'request_xml',
-        'response_xml',
-        'submitted_at',
-        'settled_at',
-    ];
-
+    #[Override]
     protected function casts(): array
     {
         return [

@@ -7,6 +7,7 @@ namespace App\Http\Resources;
 use App\Models\InvoiceLine;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Override;
 
 /** @mixin InvoiceLine */
 class InvoiceLineResource extends JsonResource
@@ -14,6 +15,7 @@ class InvoiceLineResource extends JsonResource
     /**
      * @return array<string, mixed>
      */
+    #[Override]
     public function toArray(Request $request): array
     {
         return [

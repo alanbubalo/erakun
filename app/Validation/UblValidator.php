@@ -9,7 +9,7 @@ use RuntimeException;
 
 class UblValidator
 {
-    private const SVRL_NS = 'http://purl.oclc.org/dsdl/svrl';
+    private const string SVRL_NS = 'http://purl.oclc.org/dsdl/svrl';
 
     public function __construct(
         private readonly string $schemasPath,

@@ -10,27 +10,27 @@ use DOMElement;
 
 class UblGenerator
 {
-    private const NS_INVOICE = 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2';
+    private const string NS_INVOICE = 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2';
 
-    private const NS_CAC = 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2';
+    private const string NS_CAC = 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2';
 
-    private const NS_CBC = 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2';
+    private const string NS_CBC = 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2';
 
-    private const NS_EXT = 'urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2';
+    private const string NS_EXT = 'urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2';
 
-    private const NS_SAC = 'urn:oasis:names:specification:ubl:schema:xsd:SignatureAggregateComponents-2';
+    private const string NS_SAC = 'urn:oasis:names:specification:ubl:schema:xsd:SignatureAggregateComponents-2';
 
-    private const NS_SIG = 'urn:oasis:names:specification:ubl:schema:xsd:CommonSignatureComponents-2';
+    private const string NS_SIG = 'urn:oasis:names:specification:ubl:schema:xsd:CommonSignatureComponents-2';
 
-    private const CUSTOMIZATION_ID = 'urn:cen.eu:en16931:2017#compliant#urn:mfin.gov.hr:cius-2025:1.0#conformant#urn:mfin.gov.hr:ext-2025:1.0';
+    private const string CUSTOMIZATION_ID = 'urn:cen.eu:en16931:2017#compliant#urn:mfin.gov.hr:cius-2025:1.0#conformant#urn:mfin.gov.hr:ext-2025:1.0';
 
-    private const PROFILE_ID = 'P1';
+    private const string PROFILE_ID = 'P1';
 
-    private const INVOICE_TYPE_CODE = '380';
+    private const string INVOICE_TYPE_CODE = '380';
 
-    private const PAYMENT_MEANS_CODE = '30';
+    private const string PAYMENT_MEANS_CODE = '30';
 
-    private const ISSUE_TIME = '12:00:00';
+    private const string ISSUE_TIME = '12:00:00';
 
     public function execute(Invoice $invoice): DOMDocument
     {

@@ -25,7 +25,7 @@ class SubmitFiscalization
     {
         $existing = $invoice->latestFiscalMessageFor($reporterOib);
 
-        if ($existing !== null && $existing->state === FiscalMessageState::Accepted) {
+        if ($existing instanceof FiscalMessage && $existing->state === FiscalMessageState::Accepted) {
             return $existing;
         }
 
@@ -80,7 +80,7 @@ class SubmitFiscalization
             'settled_at' => null,
         ];
 
-        if ($existing !== null) {
+        if ($existing instanceof FiscalMessage) {
             $existing->update($attributes);
 
             return $existing;

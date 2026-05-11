@@ -5,19 +5,22 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
+use Override;
 
 class InstallSchemas extends Command
 {
+    #[Override]
     protected $signature = 'schema:install {--force : Re-download jars even if already present}';
 
+    #[Override]
     protected $description = 'Download Saxon-HE + xmlresolver jars from Maven Central into resources/schemas/saxon.';
 
-    private const MAVEN_BASE = 'https://repo1.maven.org/maven2';
+    private const string MAVEN_BASE = 'https://repo1.maven.org/maven2';
 
     /**
      * @var list<array{name: string, path: string}>
      */
-    private const ARTIFACTS = [
+    private const array ARTIFACTS = [
         ['name' => 'Saxon-HE-12.5.jar', 'path' => 'net/sf/saxon/Saxon-HE/12.5'],
         ['name' => 'xmlresolver-5.2.2.jar', 'path' => 'org/xmlresolver/xmlresolver/5.2.2'],
         ['name' => 'xmlresolver-5.2.2-data.jar', 'path' => 'org/xmlresolver/xmlresolver/5.2.2'],

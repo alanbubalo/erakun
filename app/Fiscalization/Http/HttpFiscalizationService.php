@@ -21,11 +21,11 @@ use Throwable;
 
 final readonly class HttpFiscalizationService implements FiscalizationService
 {
-    private const NS = 'urn:hr:erakun:fiscal:1.0';
+    private const string NS = 'urn:hr:erakun:fiscal:1.0';
 
-    private const SOAP_NS = 'http://www.w3.org/2003/05/soap-envelope';
+    private const string SOAP_NS = 'http://www.w3.org/2003/05/soap-envelope';
 
-    private const SOAP_CONTENT_TYPE = 'application/soap+xml; charset=utf-8';
+    private const string SOAP_CONTENT_TYPE = 'application/soap+xml; charset=utf-8';
 
     public function __construct(
         private string $baseUrl,
@@ -126,9 +126,7 @@ final readonly class HttpFiscalizationService implements FiscalizationService
 
         $body = $xpath->query('/soap:Envelope/soap:Body/*')->item(0);
 
-        if (! $body instanceof DOMElement) {
-            throw new FiscalizationServiceException('TRANSPORT', 'Fiscalization service response is missing a SOAP body child element.');
-        }
+        throw_unless($body instanceof DOMElement, FiscalizationServiceException::class, 'TRANSPORT', 'Fiscalization service response is missing a SOAP body child element.');
 
         return $body;
     }
@@ -180,9 +178,7 @@ final readonly class HttpFiscalizationService implements FiscalizationService
         $node = $xpath->query($expression, $context)->item(0);
         $value = $node === null ? '' : trim((string) $node->textContent);
 
-        if ($value === '') {
-            throw new FiscalizationServiceException('TRANSPORT', "Missing required field in service response: {$expression}");
-        }
+        throw_if($value === '', FiscalizationServiceException::class, 'TRANSPORT', "Missing required field in service response: {$expression}");
 
         return $value;
     }

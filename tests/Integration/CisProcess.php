@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
+use Illuminate\Support\Sleep;
 use Symfony\Component\Process\PhpExecutableFinder;
 use Symfony\Component\Process\Process;
 
 final class CisProcess
 {
-    public const PORT = 8766;
+    public const int PORT = 8766;
 
-    public const BASE_URL = 'http://127.0.0.1:'.self::PORT;
+    public const string BASE_URL = 'http://127.0.0.1:'.self::PORT;
 
     private static ?Process $process = null;
 
@@ -74,7 +75,7 @@ final class CisProcess
 
         self::$ready = self::waitForBoot();
 
-        if (! self::$ready && self::$process !== null) {
+        if (! self::$ready && self::$process instanceof Process) {
             self::$bootLog = trim(self::$process->getOutput()."\n".self::$process->getErrorOutput());
         }
 
@@ -98,7 +99,7 @@ final class CisProcess
 
     public static function stop(): void
     {
-        if (self::$process !== null && self::$process->isRunning()) {
+        if (self::$process instanceof Process && self::$process->isRunning()) {
             $pid = self::$process->getPid();
             self::$process->stop(2);
 
@@ -124,7 +125,7 @@ final class CisProcess
                 return true;
             }
 
-            usleep(150_000);
+            Sleep::usleep(150_000);
         }
 
         return false;
@@ -145,7 +146,7 @@ final class CisProcess
         ]);
 
         $body = curl_exec($ch);
-        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
         return [$status, is_string($body) ? $body : ''];
     }

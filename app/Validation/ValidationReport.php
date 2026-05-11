@@ -13,13 +13,7 @@ final readonly class ValidationReport
 
     public function isValid(): bool
     {
-        foreach ($this->issues as $issue) {
-            if ($issue->severity === 'error') {
-                return false;
-            }
-        }
-
-        return true;
+        return array_all($this->issues, fn ($issue): bool => $issue->severity !== 'error');
     }
 
     /**

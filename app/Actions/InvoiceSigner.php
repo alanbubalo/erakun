@@ -10,19 +10,19 @@ use RuntimeException;
 
 class InvoiceSigner
 {
-    private const NS_DS = 'http://www.w3.org/2000/09/xmldsig#';
+    private const string NS_DS = 'http://www.w3.org/2000/09/xmldsig#';
 
-    private const NS_EXT = 'urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2';
+    private const string NS_EXT = 'urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2';
 
-    private const NS_SAC = 'urn:oasis:names:specification:ubl:schema:xsd:SignatureAggregateComponents-2';
+    private const string NS_SAC = 'urn:oasis:names:specification:ubl:schema:xsd:SignatureAggregateComponents-2';
 
-    private const TRANSFORM_ENVELOPED = 'http://www.w3.org/2000/09/xmldsig#enveloped-signature';
+    private const string TRANSFORM_ENVELOPED = 'http://www.w3.org/2000/09/xmldsig#enveloped-signature';
 
-    private const STUB_SIGNATURE_VALUE = 'STUB-PHASE3';
+    private const string STUB_SIGNATURE_VALUE = 'STUB-PHASE3';
 
-    private const STUB_CERT_SERIAL = '00000000000000000001';
+    private const string STUB_CERT_SERIAL = '00000000000000000001';
 
-    private const STUB_CERT_ISSUER = 'CN=eRakun Phase 3 Stub Issuer, O=eRakun, C=HR';
+    private const string STUB_CERT_ISSUER = 'CN=eRakun Phase 3 Stub Issuer, O=eRakun, C=HR';
 
     public function execute(DOMDocument $invoice): DOMDocument
     {
