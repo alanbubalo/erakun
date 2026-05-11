@@ -6,7 +6,6 @@ namespace App\Http\Controllers;
 
 use App\Actions\SubmitFiscalization;
 use App\Enums\FiscalMessageState;
-use App\Enums\InvoiceDirection;
 use App\Http\Resources\InvoiceResource;
 use App\Models\Invoice;
 use Illuminate\Http\JsonResponse;
@@ -15,9 +14,7 @@ class InvoiceFiscalizationController extends Controller
 {
     public function store(Invoice $invoice, SubmitFiscalization $action): JsonResponse
     {
-        $reporterOib = $invoice->direction === InvoiceDirection::Outbound
-            ? $invoice->supplier->oib
-            : $invoice->buyer->oib;
+        $reporterOib = $invoice->reporterOib();
 
         $latest = $invoice->latestFiscalMessageFor($reporterOib);
 

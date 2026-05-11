@@ -54,3 +54,27 @@ it('casts issue_date to a date', function (): void {
     expect($fresh->issue_date)->toBeInstanceOf(Carbon::class)
         ->and($fresh->issue_date->toDateString())->toBe('2026-01-15');
 });
+
+it('reports the supplier OIB for outbound invoices', function (): void {
+    $supplier = Taxpayer::factory()->create(['oib' => '12345678901']);
+    $buyer = Taxpayer::factory()->create(['oib' => '98765432109']);
+    $invoice = Invoice::factory()
+        ->outbound()
+        ->for($supplier, 'supplier')
+        ->for($buyer, 'buyer')
+        ->create();
+
+    expect($invoice->reporterOib())->toBe('12345678901');
+});
+
+it('reports the buyer OIB for inbound invoices', function (): void {
+    $supplier = Taxpayer::factory()->create(['oib' => '12345678901']);
+    $buyer = Taxpayer::factory()->create(['oib' => '98765432109']);
+    $invoice = Invoice::factory()
+        ->inbound()
+        ->for($supplier, 'supplier')
+        ->for($buyer, 'buyer')
+        ->create();
+
+    expect($invoice->reporterOib())->toBe('98765432109');
+});

@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources;
 
-use App\Enums\InvoiceDirection;
 use App\Models\FiscalMessage;
 use App\Models\Invoice;
 use DateTimeInterface;
@@ -45,11 +44,7 @@ class InvoiceResource extends JsonResource
      */
     private function fiscalizationBlock(): ?array
     {
-        $reporterOib = $this->direction === InvoiceDirection::Outbound
-            ? $this->supplier->oib
-            : $this->buyer->oib;
-
-        $message = $this->resource->latestFiscalMessageFor($reporterOib);
+        $message = $this->resource->latestFiscalMessageFor($this->resource->reporterOib());
 
         if (! $message instanceof FiscalMessage) {
             return null;

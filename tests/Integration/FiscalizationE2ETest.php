@@ -66,11 +66,11 @@ it('fiscalizes an outbound invoice through the real CIS wire', function (): void
 it('returns the same message id when fiscalizing the same invoice twice (idempotency)', function (): void {
     $invoice = InvoiceFixture::outbound();
 
-    $this->patchJson("/api/invoices/{$invoice->id}/status", ['status' => 'queued'])->assertOk();
-    $first = $this->patchJson("/api/invoices/{$invoice->id}/status", ['status' => 'sent']);
+    test()->patchJson("/api/invoices/{$invoice->id}/status", ['status' => 'queued'])->assertOk();
+    $first = test()->patchJson("/api/invoices/{$invoice->id}/status", ['status' => 'sent']);
     $firstId = $first->json('data.fiscalization.service_message_id');
 
-    $second = $this->postJson("/api/invoices/{$invoice->id}/fiscalize");
+    $second = test()->postJson("/api/invoices/{$invoice->id}/fiscalize");
 
     $second->assertStatus(409)
         ->assertJsonPath('message', 'Fiscal message is already accepted.');

@@ -97,4 +97,11 @@ class Invoice extends Model
             ->orderByDesc('id')
             ->first();
     }
+
+    public function reporterOib(): string
+    {
+        return $this->direction === InvoiceDirection::Outbound
+            ? $this->supplier->oib
+            : $this->buyer->oib;
+    }
 }

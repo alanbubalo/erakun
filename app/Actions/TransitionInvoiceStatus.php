@@ -39,7 +39,7 @@ class TransitionInvoiceStatus
 
         if ($this->shouldFiscalizeOutbound($invoice, $target)) {
             try {
-                $this->submitFiscalization->execute($invoice, $invoice->supplier->oib);
+                $this->submitFiscalization->execute($invoice, $invoice->reporterOib());
             } catch (FiscalizationException) {
                 // Fiscalization is decoupled — the error is persisted on the fiscal_messages
                 // row and surfaced via the resource. The lifecycle transition is not rolled
