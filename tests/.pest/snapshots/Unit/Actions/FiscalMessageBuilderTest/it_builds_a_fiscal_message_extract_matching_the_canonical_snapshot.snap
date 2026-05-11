@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FiscalizationRequest xmlns="urn:hr:erakun:fiscal:1.0">
+  <Reporter>
+    <Oib>22222222226</Oib>
+  </Reporter>
+  <Supplier>
+    <Oib>22222222226</Oib>
+  </Supplier>
+  <Buyer>
+    <Oib>11111111119</Oib>
+  </Buyer>
+  <Invoice>
+    <Number>RN-2026-00001</Number>
+    <IssueDate>2026-04-15</IssueDate>
+    <Currency>EUR</Currency>
+    <NetAmount>100.00</NetAmount>
+    <TaxAmount>25.00</TaxAmount>
+    <TotalAmount>125.00</TotalAmount>
+    <VatBreakdown>
+      <Group>
+        <Category>S</Category>
+        <Rate>25.00</Rate>
+        <Net>100.00</Net>
+        <Tax>25.00</Tax>
+      </Group>
+    </VatBreakdown>
+  </Invoice>
+</FiscalizationRequest>
