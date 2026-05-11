@@ -51,7 +51,7 @@ class FiscalMessageBuilder
         $this->appendNs($dom, $node, 'TotalAmount', $this->money($invoice->total_amount));
 
         $breakdown = $dom->createElementNS(self::NS, 'VatBreakdown');
-        foreach ($this->vatBreakdown($invoice) as $row) {
+        foreach ($invoice->vatBreakdown() as $row) {
             $group = $dom->createElementNS(self::NS, 'Group');
             $this->appendNs($dom, $group, 'Category', $row['category']);
             $this->appendNs($dom, $group, 'Rate', $this->money($row['rate']));
@@ -62,34 +62,6 @@ class FiscalMessageBuilder
         $node->appendChild($breakdown);
 
         return $node;
-    }
-
-    /**
-     * @return list<array{category: string, rate: string, taxable: string, tax: string}>
-     */
-    private function vatBreakdown(Invoice $invoice): array
-    {
-        $groups = [];
-
-        foreach ($invoice->lines as $line) {
-            $key = $line->vat_category->value.'|'.$this->money($line->vat_rate);
-            if (! isset($groups[$key])) {
-                $groups[$key] = [
-                    'category' => $line->vat_category->value,
-                    'rate' => $line->vat_rate,
-                    'taxable' => '0.00',
-                    'tax' => '0.00',
-                ];
-            }
-            $groups[$key]['taxable'] = bcadd($groups[$key]['taxable'], (string) $line->line_total, 2);
-            $groups[$key]['tax'] = bcadd(
-                $groups[$key]['tax'],
-                bcdiv(bcmul((string) $line->line_total, (string) $line->vat_rate, 4), '100', 2),
-                2,
-            );
-        }
-
-        return array_values($groups);
     }
 
     private function appendNs(DOMDocument $dom, DOMElement $parent, string $name, string $value): DOMElement

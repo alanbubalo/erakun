@@ -104,4 +104,34 @@ class Invoice extends Model
             ? $this->supplier->oib
             : $this->buyer->oib;
     }
+
+    /**
+     * @return list<array{category: string, rate: string, taxable: string, tax: string}>
+     */
+    public function vatBreakdown(): array
+    {
+        $groups = [];
+
+        foreach ($this->lines as $line) {
+            $key = $line->vat_category->value.'|'.$line->vat_rate;
+
+            if (! isset($groups[$key])) {
+                $groups[$key] = [
+                    'category' => $line->vat_category->value,
+                    'rate' => $line->vat_rate,
+                    'taxable' => '0.00',
+                    'tax' => '0.00',
+                ];
+            }
+
+            $groups[$key]['taxable'] = bcadd($groups[$key]['taxable'], (string) $line->line_total, 2);
+            $groups[$key]['tax'] = bcadd(
+                $groups[$key]['tax'],
+                bcdiv(bcmul((string) $line->line_total, (string) $line->vat_rate, 4), '100', 2),
+                2,
+            );
+        }
+
+        return array_values($groups);
+    }
 }

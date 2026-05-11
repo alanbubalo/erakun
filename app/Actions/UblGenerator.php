@@ -174,7 +174,7 @@ class UblGenerator
         $taxAmount = $this->appendCbc($dom, $taxTotal, 'TaxAmount', $this->money($invoice->tax_amount));
         $taxAmount->setAttribute('currencyID', $invoice->currency);
 
-        foreach ($this->vatBreakdown($invoice) as $row) {
+        foreach ($invoice->vatBreakdown() as $row) {
             $subtotal = $dom->createElementNS(self::NS_CAC, 'cac:TaxSubtotal');
 
             $taxable = $this->appendCbc($dom, $subtotal, 'TaxableAmount', $row['taxable']);
@@ -261,34 +261,6 @@ class UblGenerator
         $node->appendChild($price);
 
         return $node;
-    }
-
-    /**
-     * @return list<array{category: string, rate: string, taxable: string, tax: string}>
-     */
-    private function vatBreakdown(Invoice $invoice): array
-    {
-        $groups = [];
-
-        foreach ($invoice->lines as $line) {
-            $key = $line->vat_category->value.'|'.$this->percent($line->vat_rate);
-            if (! isset($groups[$key])) {
-                $groups[$key] = [
-                    'category' => $line->vat_category->value,
-                    'rate' => $line->vat_rate,
-                    'taxable' => '0.00',
-                    'tax' => '0.00',
-                ];
-            }
-            $groups[$key]['taxable'] = bcadd($groups[$key]['taxable'], (string) $line->line_total, 2);
-            $groups[$key]['tax'] = bcadd(
-                $groups[$key]['tax'],
-                bcdiv(bcmul((string) $line->line_total, (string) $line->vat_rate, 4), '100', 2),
-                2,
-            );
-        }
-
-        return array_values($groups);
     }
 
     private function appendCbc(DOMDocument $dom, DOMElement $parent, string $name, string $value): DOMElement
