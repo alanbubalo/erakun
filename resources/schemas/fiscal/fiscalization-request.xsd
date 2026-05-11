@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns="urn:hr:erakun:fiscal:1.0"
+           targetNamespace="urn:hr:erakun:fiscal:1.0"
+           elementFormDefault="qualified">
+
+  <xs:element name="FiscalizationRequest">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Reporter" type="OibParty"/>
+        <xs:element name="Supplier" type="OibParty"/>
+        <xs:element name="Buyer" type="OibParty"/>
+        <xs:element name="Invoice" type="InvoiceData"/>
+        <xs:any namespace="http://www.w3.org/2000/09/xmldsig#"
+                processContents="skip"
+                minOccurs="0"
+                maxOccurs="1"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="OibParty">
+    <xs:sequence>
+      <xs:element name="Oib" type="Oib"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:simpleType name="Oib">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[0-9]{11}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="InvoiceData">
+    <xs:sequence>
+      <xs:element name="Number">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="64"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="IssueDate" type="xs:date"/>
+      <xs:element name="Currency">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z]{3}"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="NetAmount" type="Money"/>
+      <xs:element name="TaxAmount" type="Money"/>
+      <xs:element name="TotalAmount" type="Money"/>
+      <xs:element name="VatBreakdown" type="VatBreakdown"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:simpleType name="Money">
+    <xs:restriction base="xs:decimal">
+      <xs:fractionDigits value="2"/>
+      <xs:totalDigits value="14"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="VatBreakdown">
+    <xs:sequence>
+      <xs:element name="Group" type="VatGroup" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="VatGroup">
+    <xs:sequence>
+      <xs:element name="Category">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="S"/>
+            <xs:enumeration value="Z"/>
+            <xs:enumeration value="E"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="Rate" type="Money"/>
+      <xs:element name="Net" type="Money"/>
+      <xs:element name="Tax" type="Money"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

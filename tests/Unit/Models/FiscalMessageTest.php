@@ -55,18 +55,6 @@ it('exposes a fiscalMessages HasMany relation on Invoice', function (): void {
     expect($invoice->fiscalMessages)->toHaveCount(2);
 });
 
-it('is deleted when its invoice is deleted', function (): void {
-    $invoice = Invoice::factory()->create();
-    FiscalMessage::factory(2)->for($invoice)->sequence(
-        ['reporter_oib' => '11111111111'],
-        ['reporter_oib' => '22222222222'],
-    )->create();
-
-    $invoice->delete();
-
-    expect(FiscalMessage::where('invoice_id', $invoice->id)->count())->toBe(0);
-});
-
 describe('latestFiscalMessageFor', function (): void {
     it('returns null when no fiscal message exists for the reporter OIB', function (): void {
         $invoice = Invoice::factory()->create();

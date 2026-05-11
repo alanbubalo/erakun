@@ -37,4 +37,9 @@ return [
         ],
     ],
 
+    'fiscalization' => [
+        'url' => env('FISCALIZATION_SERVICE_URL', 'http://localhost:8001'),
+        'timeout' => (int) env('FISCALIZATION_SERVICE_TIMEOUT', 10),
+    ],
+
 ];
