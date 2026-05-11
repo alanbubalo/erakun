@@ -11,12 +11,27 @@ class UblValidator
 {
     private const string SVRL_NS = 'http://purl.oclc.org/dsdl/svrl';
 
+    private const int CACHE_MAX_ENTRIES = 128;
+
+    private const int CACHE_TTL_SECONDS = 600;
+
+    /** @var array<string, array{report: ValidationReport, expires_at: int}> */
+    private static array $cache = [];
+
     public function __construct(
         private readonly string $schemasPath,
     ) {}
 
     public function validate(string $xml): ValidationReport
     {
+        $key = sha1($xml);
+        $now = time();
+
+        if (isset(self::$cache[$key]) && self::$cache[$key]['expires_at'] > $now) {
+            return self::$cache[$key]['report'];
+        }
+        unset(self::$cache[$key]);
+
         $issues = $this->runXsd($xml);
 
         $tmpXml = tempnam(sys_get_temp_dir(), 'erakun-ubl-').'.xml';
@@ -32,7 +47,14 @@ class UblValidator
             @unlink($tmpXml);
         }
 
-        return new ValidationReport($issues);
+        $report = new ValidationReport($issues);
+
+        if (count(self::$cache) >= self::CACHE_MAX_ENTRIES) {
+            array_shift(self::$cache);
+        }
+        self::$cache[$key] = ['report' => $report, 'expires_at' => $now + self::CACHE_TTL_SECONDS];
+
+        return $report;
     }
 
     /**
