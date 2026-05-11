@@ -44,6 +44,7 @@ final class ReceiveInbound
             $existing = Invoice::where('supplier_id', $supplier->id)
                 ->where('buyer_id', $buyer->id)
                 ->where('invoice_number', $parsed->invoiceNumber)
+                ->where('direction', InvoiceDirection::Inbound)
                 ->first();
 
             if ($existing !== null) {

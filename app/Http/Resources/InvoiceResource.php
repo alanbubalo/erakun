@@ -2,6 +2,10 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\FiscalMessageState;
+use App\Enums\MatchStatus;
+use App\Fiscalization\FiscalizationService;
+use App\Fiscalization\FiscalizationServiceException;
 use App\Models\FiscalMessage;
 use App\Models\Invoice;
 use DateTimeInterface;
@@ -55,11 +59,28 @@ class InvoiceResource extends JsonResource
         return [
             'state' => $message->state->value,
             'service_message_id' => $message->service_message_id,
-            'match_status' => $message->match_status?->value,
+            'match_status' => $this->resolveMatchStatus($message)?->value,
             'error_code' => $message->error_code,
             'error_message' => $message->error_message,
             'submitted_at' => $message->submitted_at?->toIso8601ZuluString(),
             'settled_at' => $message->settled_at?->toIso8601ZuluString(),
         ];
+    }
+
+    private function resolveMatchStatus(FiscalMessage $message): ?MatchStatus
+    {
+        if ($message->state !== FiscalMessageState::Accepted) {
+            return $message->match_status;
+        }
+
+        try {
+            return app(FiscalizationService::class)->lookupMatch(
+                supplierOib: $this->resource->supplier->oib,
+                buyerOib: $this->resource->buyer->oib,
+                invoiceNumber: $this->resource->invoice_number,
+            )->matchStatus;
+        } catch (FiscalizationServiceException) {
+            return $message->match_status;
+        }
     }
 }

@@ -20,19 +20,6 @@ function buildSignedInboundXml(): string
     return $xml;
 }
 
-function postInboundXml(string $xml)
-{
-    return test()->call(
-        'POST',
-        '/api/invoices/inbound',
-        [],
-        [],
-        [],
-        ['CONTENT_TYPE' => 'application/xml', 'HTTP_ACCEPT' => 'application/json'],
-        $xml,
-    );
-}
-
 it('persists a fresh inbound invoice and auto-creates the supplier (201)', function (): void {
     $xml = buildSignedInboundXml();
 

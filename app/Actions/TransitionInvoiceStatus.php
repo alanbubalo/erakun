@@ -37,7 +37,7 @@ class TransitionInvoiceStatus
         $invoice->update($update);
         $invoice->load('supplier', 'buyer', 'lines');
 
-        if ($this->shouldFiscalizeOutbound($invoice, $target)) {
+        if ($this->shouldFiscalize($invoice, $target)) {
             try {
                 $this->submitFiscalization->execute($invoice, $invoice->reporterOib());
             } catch (FiscalizationException) {
@@ -50,10 +50,10 @@ class TransitionInvoiceStatus
         return $invoice;
     }
 
-    private function shouldFiscalizeOutbound(Invoice $invoice, InvoiceStatus $target): bool
+    private function shouldFiscalize(Invoice $invoice, InvoiceStatus $target): bool
     {
-        return $target === InvoiceStatus::Sent
-            && $invoice->direction === InvoiceDirection::Outbound;
+        return ($target === InvoiceStatus::Sent && $invoice->direction === InvoiceDirection::Outbound)
+            || ($target === InvoiceStatus::Delivered && $invoice->direction === InvoiceDirection::Inbound);
     }
 
     private function shouldGenerateUbl(Invoice $invoice, InvoiceStatus $target): bool
