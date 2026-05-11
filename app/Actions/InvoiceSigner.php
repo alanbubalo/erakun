@@ -28,16 +28,16 @@ class InvoiceSigner
     {
         $signed = clone $invoice;
 
-        $info = $this->findSignatureInformation($signed);
+        $host = $this->resolveSignatureHost($signed);
         $digest = $this->computeDigest($signed);
         $signature = $this->buildSignature($signed, $digest);
 
-        $info->appendChild($signature);
+        $host->appendChild($signature);
 
         return $signed;
     }
 
-    private function findSignatureInformation(DOMDocument $dom): DOMElement
+    private function resolveSignatureHost(DOMDocument $dom): DOMElement
     {
         $xpath = new DOMXPath($dom);
         $xpath->registerNamespace('ext', self::NS_EXT);
@@ -46,9 +46,13 @@ class InvoiceSigner
         $nodes = $xpath->query('//ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/*/sac:SignatureInformation');
         $node = $nodes === false ? null : $nodes->item(0);
 
-        throw_unless($node instanceof DOMElement, RuntimeException::class, 'Invoice is missing the sac:SignatureInformation placeholder.');
+        if ($node instanceof DOMElement) {
+            return $node;
+        }
 
-        return $node;
+        throw_unless($dom->documentElement instanceof DOMElement, RuntimeException::class, 'Cannot sign a document without a root element.');
+
+        return $dom->documentElement;
     }
 
     private function computeDigest(DOMDocument $dom): string

@@ -4,6 +4,7 @@ namespace App\Actions;
 
 use App\Enums\InvoiceDirection;
 use App\Enums\InvoiceStatus;
+use App\Exceptions\FiscalizationException;
 use App\Exceptions\InvoiceValidationException;
 use App\Models\Invoice;
 use App\Validation\UblValidator;
@@ -16,6 +17,7 @@ class TransitionInvoiceStatus
         private readonly UblGenerator $generator,
         private readonly InvoiceSigner $signer,
         private readonly UblValidator $validator,
+        private readonly SubmitFiscalization $submitFiscalization,
     ) {}
 
     public function execute(Invoice $invoice, InvoiceStatus $target): Invoice
@@ -33,8 +35,25 @@ class TransitionInvoiceStatus
         }
 
         $invoice->update($update);
+        $invoice->load('supplier', 'buyer', 'lines');
 
-        return $invoice->load('supplier', 'buyer', 'lines');
+        if ($this->shouldFiscalizeOutbound($invoice, $target)) {
+            try {
+                $this->submitFiscalization->execute($invoice, $invoice->supplier->oib);
+            } catch (FiscalizationException) {
+                // Fiscalization is decoupled — the error is persisted on the fiscal_messages
+                // row and surfaced via the resource. The lifecycle transition is not rolled
+                // back; callers retry via POST /invoices/{invoice}/fiscalize.
+            }
+        }
+
+        return $invoice;
+    }
+
+    private function shouldFiscalizeOutbound(Invoice $invoice, InvoiceStatus $target): bool
+    {
+        return $target === InvoiceStatus::Sent
+            && $invoice->direction === InvoiceDirection::Outbound;
     }
 
     private function shouldGenerateUbl(Invoice $invoice, InvoiceStatus $target): bool

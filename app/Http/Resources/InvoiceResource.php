@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\InvoiceDirection;
+use App\Models\FiscalMessage;
 use App\Models\Invoice;
 use DateTimeInterface;
 use Illuminate\Http\Request;
@@ -34,6 +36,33 @@ class InvoiceResource extends JsonResource
             'tax_amount' => $this->tax_amount,
             'total_amount' => $this->total_amount,
             'lines' => InvoiceLineResource::collection($this->whenLoaded('lines')),
+            'fiscalization' => $this->fiscalizationBlock(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function fiscalizationBlock(): ?array
+    {
+        $reporterOib = $this->direction === InvoiceDirection::Outbound
+            ? $this->supplier->oib
+            : $this->buyer->oib;
+
+        $message = $this->resource->latestFiscalMessageFor($reporterOib);
+
+        if (! $message instanceof FiscalMessage) {
+            return null;
+        }
+
+        return [
+            'state' => $message->state->value,
+            'service_message_id' => $message->service_message_id,
+            'match_status' => $message->match_status?->value,
+            'error_code' => $message->error_code,
+            'error_message' => $message->error_message,
+            'submitted_at' => $message->submitted_at?->toIso8601ZuluString(),
+            'settled_at' => $message->settled_at?->toIso8601ZuluString(),
         ];
     }
 }
