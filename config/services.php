@@ -42,4 +42,11 @@ return [
         'timeout' => (int) env('FISCALIZATION_SERVICE_TIMEOUT', 10),
     ],
 
+    'as4' => [
+        'timeout' => (int) env('AS4_TIMEOUT', 15),
+        'default_peer_url' => env('AS4_DEFAULT_PEER_URL', 'http://localhost:8002'),
+        // Comma-separated "oib=url" pairs; parsed by the provider into a map.
+        'peers' => env('AS4_PEER_MAP', ''),
+    ],
+
 ];

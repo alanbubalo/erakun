@@ -91,6 +91,14 @@ class Invoice extends Model
         return $this->hasMany(FiscalMessage::class);
     }
 
+    /**
+     * @return HasMany<As4Message, $this>
+     */
+    public function as4Messages(): HasMany
+    {
+        return $this->hasMany(As4Message::class);
+    }
+
     public function latestFiscalMessageFor(string $reporterOib): ?FiscalMessage
     {
         return $this->fiscalMessages()

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  AS4 envelope contract — eRakun Phase 5a.
+
+  Pins the SOAP 1.2 + ebMS 3.0 / AS4 subset both peers exchange. Validates the
+  outer SOAP shape and the eb:Messaging header; the inner UBL payload and any
+  ds:Signature are extension points (xs:any, processContents="skip") because
+  they have their own schemas elsewhere.
+
+  Shortcut: real AS4 puts payloads in MIME multipart parts referenced by
+  cid: from eb:PartInfo. We inline the UBL inside a urn:hr:erakun:as4:1.0
+  wrapper in the SOAP body. Swap to multipart before any real deployment.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:soap="http://www.w3.org/2003/05/soap-envelope"
+           xmlns:eb="http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/200704/"
+           xmlns:as4="urn:hr:erakun:as4:1.0"
+           targetNamespace="http://www.w3.org/2003/05/soap-envelope"
+           elementFormDefault="qualified">
+
+  <xs:import namespace="http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/200704/"
+             schemaLocation="as4-ebms.xsd"/>
+  <xs:import namespace="urn:hr:erakun:as4:1.0"
+             schemaLocation="as4-payload.xsd"/>
+
+  <xs:element name="Envelope">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Header" type="soap:HeaderType"/>
+        <xs:element name="Body"   type="soap:BodyType"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="HeaderType">
+    <xs:sequence>
+      <xs:element ref="eb:Messaging"/>
+      <!-- Envelope-level signature: shape only, not crypto-verified at this layer. -->
+      <xs:any namespace="http://www.w3.org/2000/09/xmldsig#"
+              processContents="skip"
+              minOccurs="0"
+              maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="BodyType">
+    <xs:sequence>
+      <!-- Outbound user messages carry an as4:UblPayload; signal messages send an empty body. -->
+      <xs:element ref="as4:UblPayload" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+</xs:schema>

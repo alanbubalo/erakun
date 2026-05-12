@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Inline UBL payload wrapper for eRakun's AS4 envelope.
+
+  Real AS4 references payloads as MIME parts via cid: URIs from eb:PartInfo.
+  We inline the UBL element directly inside this wrapper for simplicity; the
+  eb:PartInfo/@href values use a fragment id (e.g. "#ubl") that matches this
+  element's id attribute. Swap to multipart/related before any real deployment.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns="urn:hr:erakun:as4:1.0"
+           targetNamespace="urn:hr:erakun:as4:1.0"
+           elementFormDefault="qualified">
+
+  <xs:element name="UblPayload">
+    <xs:complexType>
+      <xs:sequence>
+        <!-- The UBL Invoice has its own schema; we treat it as opaque here. -->
+        <xs:any namespace="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+                processContents="skip"
+                minOccurs="1"
+                maxOccurs="1"/>
+      </xs:sequence>
+      <xs:attribute name="id" type="xs:string" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>

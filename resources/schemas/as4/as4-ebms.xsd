@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Minimal ebMS 3.0 / AS4 messaging header subset used by eRakun Phase 5a.
+  Defines eb:Messaging with the elements we actually emit and consume:
+  UserMessage for invoice delivery, SignalMessage with Receipt or Error
+  for the response side.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:eb="http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/200704/"
+           targetNamespace="http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/200704/"
+           elementFormDefault="qualified">
+
+  <xs:element name="Messaging">
+    <xs:complexType>
+      <xs:choice>
+        <xs:element ref="eb:UserMessage"/>
+        <xs:element ref="eb:SignalMessage"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="UserMessage">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="eb:MessageInfo"/>
+        <xs:element ref="eb:PartyInfo"/>
+        <xs:element ref="eb:CollaborationInfo"/>
+        <xs:element ref="eb:PayloadInfo"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="SignalMessage">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="eb:MessageInfo"/>
+        <xs:choice>
+          <xs:element ref="eb:Receipt"/>
+          <xs:element ref="eb:Error"/>
+        </xs:choice>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="MessageInfo">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Timestamp" type="xs:dateTime"/>
+        <xs:element name="MessageId" type="eb:MessageIdType"/>
+        <xs:element name="RefToMessageId" type="eb:MessageIdType" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:simpleType name="MessageIdType">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="64"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:element name="PartyInfo">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="From" type="eb:PartyType"/>
+        <xs:element name="To"   type="eb:PartyType"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="PartyType">
+    <xs:sequence>
+      <xs:element name="PartyId">
+        <xs:complexType>
+          <xs:simpleContent>
+            <xs:extension base="eb:OibType">
+              <xs:attribute name="type" type="xs:string" use="required"/>
+            </xs:extension>
+          </xs:simpleContent>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:simpleType name="OibType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[0-9]{11}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:element name="CollaborationInfo">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Service" type="xs:anyURI"/>
+        <xs:element name="Action"  type="xs:string"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="PayloadInfo">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="PartInfo" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:attribute name="href" type="xs:string" use="required"/>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="Receipt">
+    <xs:complexType>
+      <xs:sequence>
+        <!-- Real AS4 carries digest references here; we send a bare receipt. -->
+        <xs:any namespace="##any" processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="Error">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Description" minOccurs="0">
+          <xs:complexType>
+            <xs:simpleContent>
+              <xs:extension base="xs:string">
+                <xs:anyAttribute namespace="##any" processContents="skip"/>
+              </xs:extension>
+            </xs:simpleContent>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="errorCode"         type="xs:string" use="required"/>
+      <xs:attribute name="severity"          type="xs:string" use="required"/>
+      <xs:attribute name="origin"            type="xs:string"/>
+      <xs:attribute name="category"          type="xs:string"/>
+      <xs:attribute name="shortDescription"  type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>
