@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\As4InboxController;
 use App\Http\Controllers\InboundInvoiceController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceDeliveryController;
@@ -26,3 +27,5 @@ Route::get('/invoices/{invoice}/xml', [InvoiceXmlController::class, 'show']);
 Route::patch('/invoices/{invoice}/status', [InvoiceStatusController::class, 'update']);
 Route::post('/invoices/{invoice}/fiscalize', [InvoiceFiscalizationController::class, 'store']);
 Route::post('/invoices/{invoice}/deliver', [InvoiceDeliveryController::class, 'store']);
+
+Route::post('/as4/inbox', [As4InboxController::class, 'store']);
