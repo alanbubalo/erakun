@@ -72,3 +72,61 @@ function postInboundXml(string $xml)
         $xml,
     );
 }
+
+function as4ReceiptEnvelope(
+    string $refMessageId,
+    string $peerMessageId = 'peer-receipt-001@erakun',
+    string $timestamp = '2026-05-12T10:14:23Z',
+): string {
+    return <<<XML
+        <?xml version="1.0" encoding="UTF-8"?>
+        <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"
+                       xmlns:eb="http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/200704/">
+          <soap:Header>
+            <eb:Messaging>
+              <eb:SignalMessage>
+                <eb:MessageInfo>
+                  <eb:Timestamp>{$timestamp}</eb:Timestamp>
+                  <eb:MessageId>{$peerMessageId}</eb:MessageId>
+                  <eb:RefToMessageId>{$refMessageId}</eb:RefToMessageId>
+                </eb:MessageInfo>
+                <eb:Receipt/>
+              </eb:SignalMessage>
+            </eb:Messaging>
+          </soap:Header>
+          <soap:Body/>
+        </soap:Envelope>
+        XML;
+}
+
+function as4ErrorEnvelope(
+    string $refMessageId,
+    string $errorCode = 'EBMS:0004',
+    string $description = 'UBL payload failed HR-CIUS schema validation.',
+): string {
+    return <<<XML
+        <?xml version="1.0" encoding="UTF-8"?>
+        <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"
+                       xmlns:eb="http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/200704/">
+          <soap:Header>
+            <eb:Messaging>
+              <eb:SignalMessage>
+                <eb:MessageInfo>
+                  <eb:Timestamp>2026-05-12T10:14:23Z</eb:Timestamp>
+                  <eb:MessageId>peer-err-001@erakun</eb:MessageId>
+                  <eb:RefToMessageId>{$refMessageId}</eb:RefToMessageId>
+                </eb:MessageInfo>
+                <eb:Error errorCode="{$errorCode}"
+                          severity="failure"
+                          origin="ebms"
+                          category="Content"
+                          shortDescription="PayloadValidationFailure">
+                  <eb:Description xml:lang="en">{$description}</eb:Description>
+                </eb:Error>
+              </eb:SignalMessage>
+            </eb:Messaging>
+          </soap:Header>
+          <soap:Body/>
+        </soap:Envelope>
+        XML;
+}

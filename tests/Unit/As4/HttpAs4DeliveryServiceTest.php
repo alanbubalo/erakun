@@ -36,64 +36,6 @@ function ublFixtureXml(): string
     return (string) $xml;
 }
 
-function as4ReceiptEnvelope(
-    string $refMessageId,
-    string $peerMessageId = 'peer-receipt-001@erakun',
-    string $timestamp = '2026-05-12T10:14:23Z',
-): string {
-    return <<<XML
-        <?xml version="1.0" encoding="UTF-8"?>
-        <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"
-                       xmlns:eb="http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/200704/">
-          <soap:Header>
-            <eb:Messaging>
-              <eb:SignalMessage>
-                <eb:MessageInfo>
-                  <eb:Timestamp>{$timestamp}</eb:Timestamp>
-                  <eb:MessageId>{$peerMessageId}</eb:MessageId>
-                  <eb:RefToMessageId>{$refMessageId}</eb:RefToMessageId>
-                </eb:MessageInfo>
-                <eb:Receipt/>
-              </eb:SignalMessage>
-            </eb:Messaging>
-          </soap:Header>
-          <soap:Body/>
-        </soap:Envelope>
-        XML;
-}
-
-function as4ErrorEnvelope(
-    string $refMessageId,
-    string $errorCode = 'EBMS:0004',
-    string $description = 'UBL payload failed HR-CIUS schema validation.',
-): string {
-    return <<<XML
-        <?xml version="1.0" encoding="UTF-8"?>
-        <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"
-                       xmlns:eb="http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/200704/">
-          <soap:Header>
-            <eb:Messaging>
-              <eb:SignalMessage>
-                <eb:MessageInfo>
-                  <eb:Timestamp>2026-05-12T10:14:23Z</eb:Timestamp>
-                  <eb:MessageId>peer-err-001@erakun</eb:MessageId>
-                  <eb:RefToMessageId>{$refMessageId}</eb:RefToMessageId>
-                </eb:MessageInfo>
-                <eb:Error errorCode="{$errorCode}"
-                          severity="failure"
-                          origin="ebms"
-                          category="Content"
-                          shortDescription="PayloadValidationFailure">
-                  <eb:Description xml:lang="en">{$description}</eb:Description>
-                </eb:Error>
-              </eb:SignalMessage>
-            </eb:Messaging>
-          </soap:Header>
-          <soap:Body/>
-        </soap:Envelope>
-        XML;
-}
-
 describe('send', function (): void {
     it('returns a parsed As4DeliveryReceipt on a successful eb:Receipt', function (): void {
         $captured = null;
@@ -119,6 +61,8 @@ describe('send', function (): void {
             ->and($receipt->messageId)->toEndWith('@erakun')
             ->and($receipt->receiptMessageId)->toBe('peer-receipt-001@erakun')
             ->and($receipt->acknowledgedAt->toIso8601ZuluString())->toBe('2026-05-12T10:14:23Z')
+            ->and($receipt->envelopeXml)->toContain('<eb:UserMessage>')
+            ->and($receipt->envelopeXml)->toContain('<ds:Signature')
             ->and($receipt->receiptXml)->toContain('<eb:Receipt/>');
 
         expect($captured)->not->toBeNull();
@@ -186,11 +130,12 @@ describe('send', function (): void {
         } catch (As4DeliveryException $e) {
             expect($e->errorCode)->toBe('EBMS:0004')
                 ->and($e->messageId)->not->toBeNull()
+                ->and($e->envelopeXml)->toContain('<eb:UserMessage>')
                 ->and($e->getMessage())->toBe('bad ubl');
         }
     });
 
-    it('throws EBMS:0005 with a null messageId when the recipient is unknown', function (): void {
+    it('throws EBMS:0005 with a null messageId and null envelope when the recipient is unknown', function (): void {
         $resolver = new ConfigPeerEndpointResolver(map: [], defaultPeerUrl: '');
 
         try {
@@ -202,13 +147,14 @@ describe('send', function (): void {
             test()->fail('Expected As4DeliveryException was not thrown.');
         } catch (As4DeliveryException $e) {
             expect($e->errorCode)->toBe('EBMS:0005')
-                ->and($e->messageId)->toBeNull();
+                ->and($e->messageId)->toBeNull()
+                ->and($e->envelopeXml)->toBeNull();
         }
 
         Http::assertNothingSent();
     });
 
-    it('translates a ConnectionException into a TRANSPORT error carrying the outbound messageId', function (): void {
+    it('translates a ConnectionException into a TRANSPORT error carrying the outbound messageId and envelope', function (): void {
         Http::fake(fn (): never => throw new ConnectionException('Connection refused'));
 
         try {
@@ -221,6 +167,7 @@ describe('send', function (): void {
         } catch (As4DeliveryException $e) {
             expect($e->errorCode)->toBe('TRANSPORT')
                 ->and($e->messageId)->not->toBeNull()
+                ->and($e->envelopeXml)->toContain('<eb:UserMessage>')
                 ->and($e->getMessage())->toContain('Connection refused');
         }
     });

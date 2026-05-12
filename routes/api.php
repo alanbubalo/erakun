@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\InboundInvoiceController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\InvoiceDeliveryController;
 use App\Http\Controllers\InvoiceFiscalizationController;
 use App\Http\Controllers\InvoiceStatusController;
 use App\Http\Controllers\InvoiceXmlController;
@@ -24,3 +25,4 @@ Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);
 Route::get('/invoices/{invoice}/xml', [InvoiceXmlController::class, 'show']);
 Route::patch('/invoices/{invoice}/status', [InvoiceStatusController::class, 'update']);
 Route::post('/invoices/{invoice}/fiscalize', [InvoiceFiscalizationController::class, 'store']);
+Route::post('/invoices/{invoice}/deliver', [InvoiceDeliveryController::class, 'store']);

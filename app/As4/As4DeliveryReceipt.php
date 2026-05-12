@@ -12,6 +12,7 @@ final readonly class As4DeliveryReceipt
         public string $messageId,
         public string $receiptMessageId,
         public CarbonImmutable $acknowledgedAt,
+        public string $envelopeXml,
         public string $receiptXml,
     ) {}
 }

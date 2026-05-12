@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\As4MessageDirection;
 use App\Enums\FiscalMessageType;
 use App\Enums\InvoiceDirection;
 use App\Enums\InvoiceStatus;
@@ -97,6 +98,14 @@ class Invoice extends Model
     public function as4Messages(): HasMany
     {
         return $this->hasMany(As4Message::class);
+    }
+
+    public function latestAs4MessageFor(As4MessageDirection $direction): ?As4Message
+    {
+        return $this->as4Messages()
+            ->where('direction', $direction)
+            ->orderByDesc('id')
+            ->first();
     }
 
     public function latestFiscalMessageFor(string $reporterOib): ?FiscalMessage

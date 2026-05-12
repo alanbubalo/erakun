@@ -4,6 +4,7 @@ namespace App\Actions;
 
 use App\Enums\InvoiceDirection;
 use App\Enums\InvoiceStatus;
+use App\Exceptions\As4DeliveryFailedException;
 use App\Exceptions\FiscalizationException;
 use App\Exceptions\InvoiceValidationException;
 use App\Models\Invoice;
@@ -17,6 +18,7 @@ class TransitionInvoiceStatus
         private readonly UblGenerator $generator,
         private readonly InvoiceSigner $signer,
         private readonly UblValidator $validator,
+        private readonly SubmitAs4Delivery $submitAs4Delivery,
         private readonly SubmitFiscalization $submitFiscalization,
     ) {}
 
@@ -37,6 +39,16 @@ class TransitionInvoiceStatus
         $invoice->update($update);
         $invoice->load('supplier', 'buyer', 'lines');
 
+        if ($this->shouldDeliver($invoice, $target)) {
+            try {
+                $this->submitAs4Delivery->execute($invoice);
+            } catch (As4DeliveryFailedException) {
+                // AS4 delivery is decoupled — the error is persisted on the as4_messages
+                // row and surfaced via the resource. The lifecycle transition is not rolled
+                // back; callers retry via POST /invoices/{invoice}/deliver.
+            }
+        }
+
         if ($this->shouldFiscalize($invoice, $target)) {
             try {
                 $this->submitFiscalization->execute($invoice, $invoice->reporterOib());
@@ -48,6 +60,12 @@ class TransitionInvoiceStatus
         }
 
         return $invoice;
+    }
+
+    private function shouldDeliver(Invoice $invoice, InvoiceStatus $target): bool
+    {
+        return $target === InvoiceStatus::Sent
+            && $invoice->direction === InvoiceDirection::Outbound;
     }
 
     private function shouldFiscalize(Invoice $invoice, InvoiceStatus $target): bool

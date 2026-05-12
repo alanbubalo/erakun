@@ -12,6 +12,7 @@ final class As4DeliveryException extends RuntimeException
         public readonly string $errorCode,
         public readonly ?string $messageId,
         string $message,
+        public readonly ?string $envelopeXml = null,
     ) {
         parent::__construct($message);
     }
