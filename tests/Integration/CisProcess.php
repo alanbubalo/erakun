@@ -97,6 +97,21 @@ final class CisProcess
         self::httpRequest('POST', self::BASE_URL.'/admin/reset', timeout: 2);
     }
 
+    /**
+     * Register a participant in the AMS: OIB → the MPS that publishes them.
+     * Stands in for the onboarding-time registration so the directory is
+     * populated deterministically after each reset.
+     */
+    public static function registerParticipant(string $oib, string $mpsUrl): void
+    {
+        self::httpRequest(
+            'PUT',
+            self::BASE_URL.'/ams/participants/'.$oib,
+            timeout: 2,
+            payload: (string) json_encode(['mps_url' => $mpsUrl]),
+        );
+    }
+
     public static function stop(): void
     {
         if (self::$process instanceof Process && self::$process->isRunning()) {
@@ -134,7 +149,7 @@ final class CisProcess
     /**
      * @return array{0:int, 1:string} [http_status, body]
      */
-    private static function httpRequest(string $method, string $url, int $timeout): array
+    private static function httpRequest(string $method, string $url, int $timeout, ?string $payload = null): array
     {
         $ch = curl_init();
         curl_setopt_array($ch, [
@@ -144,6 +159,14 @@ final class CisProcess
             CURLOPT_CONNECTTIMEOUT => $timeout,
             CURLOPT_TIMEOUT => $timeout,
         ]);
+
+        if ($payload !== null) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Accept: application/json',
+                'Content-Type: application/json',
+            ]);
+        }
 
         $body = curl_exec($ch);
         $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);

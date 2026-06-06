@@ -44,4 +44,25 @@ final readonly class AmsClient
 
         return is_string($mpsUrl) && $mpsUrl !== '' ? $mpsUrl : null;
     }
+
+    /**
+     * Publish that the given participant is served by our MPS. Best-effort: an
+     * unreachable AMS is reported as a failed registration rather than thrown,
+     * so onboarding never hinges on the directory being up.
+     *
+     * @return bool Whether the AMS accepted the registration.
+     */
+    public function register(string $oib, string $mpsUrl): bool
+    {
+        try {
+            $response = Http::baseUrl($this->baseUrl)
+                ->timeout($this->timeout)
+                ->acceptJson()
+                ->put('/ams/participants/'.$oib, ['mps_url' => $mpsUrl]);
+        } catch (ConnectionException) {
+            return false;
+        }
+
+        return $response->successful();
+    }
 }

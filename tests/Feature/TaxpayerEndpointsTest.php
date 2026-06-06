@@ -1,6 +1,11 @@
 <?php
 
 use App\Models\Taxpayer;
+use Illuminate\Support\Facades\Http;
+
+// Onboarding announces the participant to the AMS over HTTP; fake it so these
+// endpoint tests stay isolated from the directory.
+beforeEach(fn () => Http::fake());
 
 it('registers a taxpayer', function (): void {
     $response = $this->postJson('/api/taxpayers', [

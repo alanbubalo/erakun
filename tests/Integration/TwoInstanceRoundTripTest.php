@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\As4\AmsClient;
 use App\As4\As4DeliveryService;
 use App\As4\PeerEndpointResolver;
 use App\Enums\InvoiceStatus;
@@ -44,14 +45,19 @@ beforeEach(function (): void {
 
     CisProcess::reset();
 
-    // Point instance A at the real CIS and route the buyer's OIB to the peer AP.
+    // Point instance A at the real CIS and at the AMS (co-located in porezna).
+    // No static peer map and no default peer: the buyer's AP must be found
+    // purely through discovery — AMS → MPS → AS4 endpoint.
     config([
         'services.fiscalization.url' => CisProcess::BASE_URL,
         'services.fiscalization.timeout' => 5,
         'services.as4.timeout' => 5,
-        'services.as4.peers' => '11111111119='.PeerProcess::BASE_URL,
+        'services.as4.peers' => '',
+        'services.as4.default_peer_url' => '',
+        'services.ams.base_url' => CisProcess::BASE_URL,
     ]);
     app()->forgetInstance(FiscalizationService::class);
+    app()->forgetInstance(AmsClient::class);
     app()->forgetInstance(PeerEndpointResolver::class);
     app()->forgetInstance(As4DeliveryService::class);
 
@@ -66,6 +72,11 @@ beforeEach(function (): void {
         'postcode' => '51000',
         'is_vat_registered' => true,
     ]);
+
+    // Publish the buyer in the AMS as served by B's MPS. (Onboarding on B also
+    // self-registers, but reset wipes the directory each run while the duplicate
+    // POST above 422s — so register here to keep discovery deterministic.)
+    CisProcess::registerParticipant('11111111119', PeerProcess::BASE_URL);
 });
 
 function skipReason(string $label, string $baseUrl, string $log): string

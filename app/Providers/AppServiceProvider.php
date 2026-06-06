@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Actions\RegisterParticipant;
 use App\As4\AmsClient;
 use App\As4\AmsMpsPeerEndpointResolver;
 use App\As4\As4DeliveryService;
@@ -33,16 +34,23 @@ class AppServiceProvider extends ServiceProvider
             timeout: (int) config('services.fiscalization.timeout'),
         ));
 
-        $this->app->singleton(PeerEndpointResolver::class, fn (): AmsMpsPeerEndpointResolver => new AmsMpsPeerEndpointResolver(
-            ams: new AmsClient(
-                baseUrl: (string) config('services.ams.base_url'),
-                timeout: (int) config('services.as4.timeout'),
-            ),
+        $this->app->singleton(AmsClient::class, fn (): AmsClient => new AmsClient(
+            baseUrl: (string) config('services.ams.base_url'),
+            timeout: (int) config('services.as4.timeout'),
+        ));
+
+        $this->app->singleton(PeerEndpointResolver::class, fn (Application $app): AmsMpsPeerEndpointResolver => new AmsMpsPeerEndpointResolver(
+            ams: $app->make(AmsClient::class),
             fallback: new ConfigPeerEndpointResolver(
                 map: $this->parsePeerMap((string) config('services.as4.peers')),
                 defaultPeerUrl: (string) config('services.as4.default_peer_url'),
             ),
             timeout: (int) config('services.as4.timeout'),
+        ));
+
+        $this->app->singleton(RegisterParticipant::class, fn (Application $app): RegisterParticipant => new RegisterParticipant(
+            ams: $app->make(AmsClient::class),
+            mpsBaseUrl: (string) config('services.mps.base_url'),
         ));
 
         $this->app->singleton(As4DeliveryService::class, fn (Application $app): HttpAs4DeliveryService => new HttpAs4DeliveryService(

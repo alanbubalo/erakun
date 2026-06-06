@@ -34,22 +34,37 @@ final readonly class HttpAs4DeliveryService implements As4DeliveryService
         private int $timeout,
     ) {}
 
+    /**
+     * Normalise a resolved peer address to its AS4 inbox URL. Discovery (MPS)
+     * already hands back the full endpoint; a static config entry is just the
+     * peer's base URL, so the inbox path is appended when it is not present.
+     */
+    private function inboxEndpoint(string $peerUrl): string
+    {
+        if (str_ends_with(rtrim($peerUrl, '/'), self::INBOX_PATH)) {
+            return $peerUrl;
+        }
+
+        return rtrim($peerUrl, '/').self::INBOX_PATH;
+    }
+
     public function send(string $ublXml, string $senderOib, string $recipientOib): As4DeliveryReceipt
     {
         $peerUrl = $this->peers->resolve($recipientOib);
 
         throw_if($peerUrl === null, new As4DeliveryException('EBMS:0005', null, "No peer AP configured for recipient OIB {$recipientOib}."));
 
+        $endpoint = $this->inboxEndpoint($peerUrl);
+
         $messageId = Str::uuid()->toString().'@erakun';
 
         $envelope = $this->buildSignedEnvelope($ublXml, $messageId, $senderOib, $recipientOib);
 
         try {
-            $response = Http::baseUrl($peerUrl)
-                ->timeout($this->timeout)
+            $response = Http::timeout($this->timeout)
                 ->withBody($envelope, self::SOAP_CONTENT_TYPE)
                 ->withHeaders(['Accept' => self::SOAP_CONTENT_TYPE])
-                ->post(self::INBOX_PATH);
+                ->post($endpoint);
         } catch (ConnectionException $e) {
             throw new As4DeliveryException('TRANSPORT', $messageId, 'AS4 peer unreachable: '.$e->getMessage(), $envelope);
         }
