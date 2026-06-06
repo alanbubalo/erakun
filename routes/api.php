@@ -9,6 +9,7 @@ use App\Http\Controllers\InvoiceDeliveryController;
 use App\Http\Controllers\InvoiceFiscalizationController;
 use App\Http\Controllers\InvoiceStatusController;
 use App\Http\Controllers\InvoiceXmlController;
+use App\Http\Controllers\MpsParticipantController;
 use App\Http\Controllers\TaxpayerController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,3 +30,5 @@ Route::post('/invoices/{invoice}/fiscalize', [InvoiceFiscalizationController::cl
 Route::post('/invoices/{invoice}/deliver', [InvoiceDeliveryController::class, 'store']);
 
 Route::post('/as4/inbox', [As4InboxController::class, 'store']);
+
+Route::get('/mps/participants/{oib}', [MpsParticipantController::class, 'show']);

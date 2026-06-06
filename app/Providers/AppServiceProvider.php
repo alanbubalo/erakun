@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\As4\AmsClient;
+use App\As4\AmsMpsPeerEndpointResolver;
 use App\As4\As4DeliveryService;
 use App\As4\As4EnvelopeBuilder;
 use App\As4\As4EnvelopeSigner;
@@ -31,9 +33,16 @@ class AppServiceProvider extends ServiceProvider
             timeout: (int) config('services.fiscalization.timeout'),
         ));
 
-        $this->app->singleton(PeerEndpointResolver::class, fn (): ConfigPeerEndpointResolver => new ConfigPeerEndpointResolver(
-            map: $this->parsePeerMap((string) config('services.as4.peers')),
-            defaultPeerUrl: (string) config('services.as4.default_peer_url'),
+        $this->app->singleton(PeerEndpointResolver::class, fn (): AmsMpsPeerEndpointResolver => new AmsMpsPeerEndpointResolver(
+            ams: new AmsClient(
+                baseUrl: (string) config('services.ams.base_url'),
+                timeout: (int) config('services.as4.timeout'),
+            ),
+            fallback: new ConfigPeerEndpointResolver(
+                map: $this->parsePeerMap((string) config('services.as4.peers')),
+                defaultPeerUrl: (string) config('services.as4.default_peer_url'),
+            ),
+            timeout: (int) config('services.as4.timeout'),
         ));
 
         $this->app->singleton(As4DeliveryService::class, fn (Application $app): HttpAs4DeliveryService => new HttpAs4DeliveryService(

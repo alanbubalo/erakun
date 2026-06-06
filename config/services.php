@@ -49,4 +49,17 @@ return [
         'peers' => env('AS4_PEER_MAP', ''),
     ],
 
+    // AMS — central locator operated by Porezna uprava (the erakun-porezna sibling).
+    // Maps a recipient OIB to the MPS that publishes it.
+    'ams' => [
+        'base_url' => env('AMS_BASE_URL', 'http://localhost:8001'),
+    ],
+
+    // MPS — the metadata service we publish for our own taxpayers. Derived from
+    // the `taxpayers` table; `as4_endpoint` is the AS4 inbox we expose to peers.
+    'mps' => [
+        'base_url' => env('MPS_BASE_URL', 'http://localhost:8000'),
+        'as4_endpoint' => env('MPS_AS4_ENDPOINT', 'http://localhost:8000/api/as4/inbox'),
+    ],
+
 ];
