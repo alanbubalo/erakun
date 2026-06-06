@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Actions\InvoiceSigner;
 use App\As4\As4DeliveryService;
 use App\As4\As4EnvelopeBuilder;
+use App\As4\As4EnvelopeSigner;
 use App\As4\ConfigPeerEndpointResolver;
 use App\As4\Http\HttpAs4DeliveryService;
 use App\As4\PeerEndpointResolver;
@@ -38,7 +38,7 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(As4DeliveryService::class, fn (Application $app): HttpAs4DeliveryService => new HttpAs4DeliveryService(
             builder: $app->make(As4EnvelopeBuilder::class),
-            signer: $app->make(InvoiceSigner::class),
+            signer: $app->make(As4EnvelopeSigner::class),
             peers: $app->make(PeerEndpointResolver::class),
             timeout: (int) config('services.as4.timeout'),
         ));

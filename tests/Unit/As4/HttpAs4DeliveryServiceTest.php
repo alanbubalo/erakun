@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use App\Actions\InvoiceSigner;
 use App\As4\As4DeliveryException;
 use App\As4\As4DeliveryReceipt;
 use App\As4\As4EnvelopeBuilder;
+use App\As4\As4EnvelopeSigner;
 use App\As4\ConfigPeerEndpointResolver;
 use App\As4\Http\HttpAs4DeliveryService;
 use App\As4\PeerEndpointResolver;
@@ -17,7 +17,7 @@ function makeAs4Service(?PeerEndpointResolver $peers = null): HttpAs4DeliverySer
 {
     return new HttpAs4DeliveryService(
         builder: new As4EnvelopeBuilder,
-        signer: new InvoiceSigner,
+        signer: new As4EnvelopeSigner,
         peers: $peers ?? new ConfigPeerEndpointResolver(
             map: ['98765432109' => 'http://peer.test'],
             defaultPeerUrl: 'http://default.test',

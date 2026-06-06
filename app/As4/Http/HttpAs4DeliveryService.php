@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\As4\Http;
 
-use App\Actions\InvoiceSigner;
 use App\As4\As4DeliveryException;
 use App\As4\As4DeliveryReceipt;
 use App\As4\As4DeliveryService;
 use App\As4\As4EnvelopeBuilder;
+use App\As4\As4EnvelopeSigner;
 use App\As4\PeerEndpointResolver;
 use Carbon\CarbonImmutable;
 use DOMDocument;
@@ -29,7 +29,7 @@ final readonly class HttpAs4DeliveryService implements As4DeliveryService
 
     public function __construct(
         private As4EnvelopeBuilder $builder,
-        private InvoiceSigner $signer,
+        private As4EnvelopeSigner $signer,
         private PeerEndpointResolver $peers,
         private int $timeout,
     ) {}
