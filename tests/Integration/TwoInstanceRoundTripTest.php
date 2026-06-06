@@ -123,10 +123,44 @@ it('round-trips an invoice from sender AP to receiver AP and matches on both sid
     expect($invoice->fresh()->status)->toBe(InvoiceStatus::Sent);
 });
 
-it('flips both sides to mismatch when the inner UBL total is tampered in transit', function (): void {
-    // Variant: corrupt the inner UBL cbc:PayableAmount so the buyer side reports
-    // a different total than the supplier side, and assert both reporters flip to
-    // `mismatch`. Pending a tamper hook — the AS4 path delivers A's signed UBL
-    // verbatim, so this needs either a man-in-the-middle re-sign step or a direct
-    // POST of a mutated payload to B's /api/invoices/inbound endpoint.
-})->todo();
+it('flips both sides to mismatch when the supplier and buyer report different totals', function (): void {
+    // The receiver validates the inbound UBL against HR-CIUS, so a single-field
+    // tamper of the payload would just be rejected (BR-CO-* totals rules). Instead
+    // we drive the two corners apart at the reporting layer: A's UBL is generated
+    // at Queued (100/25/125, the figures B will receive and report), then A's own
+    // record is rewritten before Sent so the *supplier* fiscalizes 200/50/250.
+    // CIS holds two submissions for the same invoice with different totals.
+    $invoice = InvoiceFixture::outbound();
+    $invoice->update(['invoice_number' => 'RN-2026-09999']);
+
+    test()->patchJson("/api/invoices/{$invoice->id}/status", ['status' => 'queued'])->assertOk();
+
+    $invoice->lines()->update(['unit_price' => '200.00', 'line_total' => '200.00']);
+    $invoice->update(['net_amount' => '200.00', 'tax_amount' => '50.00', 'total_amount' => '250.00']);
+
+    $sent = test()->patchJson("/api/invoices/{$invoice->id}/status", ['status' => 'sent']);
+    $sent->assertOk()
+        ->assertJsonPath('data.delivery.state', 'acknowledged')
+        ->assertJsonPath('data.fiscalization.state', 'accepted')
+        ->assertJsonPath('data.fiscalization.match_status', 'pending');
+
+    // B received the untampered invoice (250 was never in the UBL) and reports it.
+    [, $list] = PeerProcess::api('GET', '/api/invoices');
+    $peerInvoice = collect($list['data'])->firstWhere('invoice_number', 'RN-2026-09999');
+    expect($peerInvoice)->not->toBeNull()
+        ->and($peerInvoice['total_amount'])->toBe('125.00');
+
+    [$patchStatus, $delivered] = PeerProcess::api(
+        'PATCH',
+        "/api/invoices/{$peerInvoice['id']}/status",
+        ['status' => 'delivered'],
+    );
+    expect($patchStatus)->toBe(200)
+        ->and($delivered['data']['fiscalization']['state'])->toBe('accepted')
+        ->and($delivered['data']['fiscalization']['match_status'])->toBe('mismatch');
+
+    // The supplier side, re-fetched live, agrees: the totals do not reconcile.
+    test()->getJson("/api/invoices/{$invoice->id}")
+        ->assertOk()
+        ->assertJsonPath('data.fiscalization.match_status', 'mismatch');
+});
