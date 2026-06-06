@@ -27,6 +27,7 @@ describe('outbound Queued → Sent', function (): void {
     it('submits the fiscal message and exposes accepted state on the resource', function (): void {
         Http::fake([
             'http://cis.test/fiscalize' => Http::response(fiscAcceptedEnvelope('FIS-2026-000042', 'pending'), 200),
+            'http://cis.test/match*' => Http::response(fiscMatchPayload('pending'), 200),
         ]);
 
         $invoice = queueOutboundInvoice();
@@ -76,6 +77,7 @@ describe('POST /api/invoices/{invoice}/fiscalize', function (): void {
     it('returns 409 when the latest fiscal message is already accepted', function (): void {
         Http::fake([
             'http://cis.test/fiscalize' => Http::response(fiscAcceptedEnvelope(), 200),
+            'http://cis.test/match*' => Http::response(fiscMatchPayload('pending'), 200),
         ]);
 
         $invoice = queueOutboundInvoice();
