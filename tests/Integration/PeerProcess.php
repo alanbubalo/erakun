@@ -39,7 +39,7 @@ final class PeerProcess
      *
      * @var array<string, false>
      */
-    private const CLEARED_ENV = [
+    private const array CLEARED_ENV = [
         'APP_ENV' => false,
         'APP_KEY' => false,
         'APP_MAINTENANCE_DRIVER' => false,

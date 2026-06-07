@@ -105,7 +105,7 @@ it('preserves the inner UBL Invoice payload', function (): void {
 });
 
 it('throws when the UBL payload is malformed', function (): void {
-    expect(fn () => (new As4EnvelopeBuilder)->build(
+    expect(fn (): DOMDocument => (new As4EnvelopeBuilder)->build(
         ublXml: '<not really xml',
         messageId: 'x@erakun',
         senderOib: '12345678901',

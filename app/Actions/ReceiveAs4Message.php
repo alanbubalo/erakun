@@ -21,6 +21,7 @@ use DOMDocument;
 use DOMElement;
 use DOMXPath;
 use Illuminate\Support\Str;
+use LibXMLError;
 use RuntimeException;
 use Throwable;
 
@@ -71,11 +72,11 @@ class ReceiveAs4Message
             $ublXml = $this->extractUblPayload($dom);
             $report = $this->validator->validate($ublXml);
 
-            throw_unless($report->isValid(), new As4InboundException(
+            throw_unless($report->isValid(),
+                As4InboundException::class,
                 'EBMS:0004',
                 'UBL payload failed HR-CIUS validation: '.$this->summariseReport($report),
-                $metadata['messageId'],
-            ));
+                $metadata['messageId']);
 
             $parsed = $this->parser->parse($ublXml);
             $invoice = $this->receiveInbound->execute($parsed, $ublXml);
@@ -132,7 +133,7 @@ class ReceiveAs4Message
 
         if (! $valid) {
             $first = $errors[0] ?? null;
-            $detail = $first !== null ? trim($first->message) : 'unknown';
+            $detail = $first instanceof LibXMLError ? trim($first->message) : 'unknown';
             throw new As4InboundException('EBMS:0009', 'AS4 envelope failed schema validation: '.$detail);
         }
 
@@ -155,7 +156,9 @@ class ReceiveAs4Message
         // XSD already enforces these are present and well-formed; defensive check.
         throw_if(
             $messageId === '' || $fromOib === '' || $toOib === '',
-            new As4InboundException('EBMS:0009', 'AS4 envelope is missing required header fields.'),
+            As4InboundException::class,
+            'EBMS:0009',
+            'AS4 envelope is missing required header fields.',
         );
 
         return ['messageId' => $messageId, 'fromOib' => $fromOib, 'toOib' => $toOib];
@@ -165,10 +168,10 @@ class ReceiveAs4Message
     {
         $signatures = $dom->getElementsByTagNameNS(self::NS_DS, 'Signature');
 
-        throw_if($signatures->length === 0, new As4InboundException(
+        throw_if($signatures->length === 0,
+            As4InboundException::class,
             'EBMS:0009',
-            'AS4 envelope is missing the required <ds:Signature> element.',
-        ));
+            'AS4 envelope is missing the required <ds:Signature> element.');
     }
 
     private function extractUblPayload(DOMDocument $dom): string
@@ -180,10 +183,10 @@ class ReceiveAs4Message
 
         $invoice = $xpath->query('/soap:Envelope/soap:Body/as4:UblPayload/ubl:Invoice')->item(0);
 
-        throw_unless($invoice instanceof DOMElement, new As4InboundException(
+        throw_unless($invoice instanceof DOMElement,
+            As4InboundException::class,
             'EBMS:0004',
-            'AS4 envelope body is missing a UBL Invoice payload.',
-        ));
+            'AS4 envelope body is missing a UBL Invoice payload.');
 
         $clone = new DOMDocument('1.0', 'UTF-8');
         $clone->appendChild($clone->importNode($invoice, true));

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\As4;
 
-use App\Actions\InvoiceSigner;
 use DOMDocument;
 use DOMElement;
 use RobRichards\XMLSecLibs\XMLSecurityDSig;

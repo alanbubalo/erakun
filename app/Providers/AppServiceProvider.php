@@ -75,15 +75,20 @@ class AppServiceProvider extends ServiceProvider
 
         foreach (explode(',', $raw) as $pair) {
             $pair = trim($pair);
-            if ($pair === '' || ! str_contains($pair, '=')) {
+            if ($pair === '') {
+                continue;
+            }
+            if (! str_contains($pair, '=')) {
                 continue;
             }
 
             [$oib, $url] = explode('=', $pair, 2);
             $oib = trim($oib);
             $url = trim($url);
-
-            if ($oib === '' || $url === '') {
+            if ($oib === '') {
+                continue;
+            }
+            if ($url === '') {
                 continue;
             }
 

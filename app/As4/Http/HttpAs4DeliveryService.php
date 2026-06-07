@@ -52,7 +52,7 @@ final readonly class HttpAs4DeliveryService implements As4DeliveryService
     {
         $peerUrl = $this->peers->resolve($recipientOib);
 
-        throw_if($peerUrl === null, new As4DeliveryException('EBMS:0005', null, "No peer AP configured for recipient OIB {$recipientOib}."));
+        throw_if($peerUrl === null, As4DeliveryException::class, 'EBMS:0005', null, "No peer AP configured for recipient OIB {$recipientOib}.");
 
         $endpoint = $this->inboxEndpoint($peerUrl);
 
@@ -86,7 +86,7 @@ final readonly class HttpAs4DeliveryService implements As4DeliveryService
             throw new As4DeliveryException('TRANSPORT', $messageId, 'Failed to build AS4 envelope: '.$e->getMessage());
         }
 
-        throw_if($xml === false, new As4DeliveryException('TRANSPORT', $messageId, 'Failed to serialize AS4 envelope.'));
+        throw_if($xml === false, As4DeliveryException::class, 'TRANSPORT', $messageId, 'Failed to serialize AS4 envelope.');
 
         return $xml;
     }
@@ -95,7 +95,7 @@ final readonly class HttpAs4DeliveryService implements As4DeliveryService
     {
         $raw = $response->body();
 
-        throw_if($raw === '', new As4DeliveryException('TRANSPORT', $messageId, "AS4 peer returned an empty body (HTTP {$response->status()}).", $envelope));
+        throw_if($raw === '', As4DeliveryException::class, 'TRANSPORT', $messageId, "AS4 peer returned an empty body (HTTP {$response->status()}).", $envelope);
 
         $previous = libxml_use_internal_errors(true);
         libxml_clear_errors();
@@ -106,7 +106,7 @@ final readonly class HttpAs4DeliveryService implements As4DeliveryService
         libxml_clear_errors();
         libxml_use_internal_errors($previous);
 
-        throw_if($loaded === false, new As4DeliveryException('TRANSPORT', $messageId, "AS4 peer returned malformed XML (HTTP {$response->status()}).", $envelope));
+        throw_if($loaded === false, As4DeliveryException::class, 'TRANSPORT', $messageId, "AS4 peer returned malformed XML (HTTP {$response->status()}).", $envelope);
 
         $xpath = new DOMXPath($dom);
         $xpath->registerNamespace('soap', As4EnvelopeBuilder::NS_SOAP);
@@ -114,7 +114,7 @@ final readonly class HttpAs4DeliveryService implements As4DeliveryService
 
         $signal = $xpath->query('/soap:Envelope/soap:Header/eb:Messaging/eb:SignalMessage')->item(0);
 
-        throw_unless($signal instanceof DOMElement, new As4DeliveryException('TRANSPORT', $messageId, 'AS4 peer response is missing eb:SignalMessage.', $envelope));
+        throw_unless($signal instanceof DOMElement, As4DeliveryException::class, 'TRANSPORT', $messageId, 'AS4 peer response is missing eb:SignalMessage.', $envelope);
 
         $error = $xpath->query('eb:Error', $signal)->item(0);
 
@@ -124,7 +124,7 @@ final readonly class HttpAs4DeliveryService implements As4DeliveryService
 
         $receipt = $xpath->query('eb:Receipt', $signal)->item(0);
 
-        throw_unless($receipt instanceof DOMElement, new As4DeliveryException('TRANSPORT', $messageId, 'AS4 peer signal is neither eb:Receipt nor eb:Error.', $envelope));
+        throw_unless($receipt instanceof DOMElement, As4DeliveryException::class, 'TRANSPORT', $messageId, 'AS4 peer signal is neither eb:Receipt nor eb:Error.', $envelope);
 
         return $this->buildReceipt($xpath, $signal, $messageId, $envelope, $raw);
     }
@@ -142,7 +142,7 @@ final readonly class HttpAs4DeliveryService implements As4DeliveryService
         $description = '';
         foreach ($error->childNodes as $child) {
             if ($child instanceof DOMElement && $child->localName === 'Description') {
-                $description = trim((string) $child->textContent);
+                $description = trim($child->textContent);
                 break;
             }
         }
@@ -185,7 +185,7 @@ final readonly class HttpAs4DeliveryService implements As4DeliveryService
         $node = $xpath->query($expression, $context)->item(0);
         $value = $node === null ? '' : trim((string) $node->textContent);
 
-        throw_if($value === '', new As4DeliveryException('TRANSPORT', $messageId, "Missing required field in AS4 receipt: {$expression}", $envelope));
+        throw_if($value === '', As4DeliveryException::class, 'TRANSPORT', $messageId, "Missing required field in AS4 receipt: {$expression}", $envelope);
 
         return $value;
     }
