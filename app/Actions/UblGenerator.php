@@ -4,7 +4,7 @@ namespace App\Actions;
 
 use App\Models\Invoice;
 use App\Models\InvoiceLine;
-use App\Models\Taxpayer;
+use App\Models\Party;
 use DOMDocument;
 use DOMElement;
 
@@ -121,37 +121,37 @@ class UblGenerator
         $root->appendChild($wrapper);
     }
 
-    private function buildParty(DOMDocument $dom, Taxpayer $taxpayer): DOMElement
+    private function buildParty(DOMDocument $dom, Party $party): DOMElement
     {
-        $party = $dom->createElementNS(self::NS_CAC, 'cac:Party');
+        $partyEl = $dom->createElementNS(self::NS_CAC, 'cac:Party');
 
-        $endpoint = $this->appendCbc($dom, $party, 'EndpointID', $taxpayer->oib);
+        $endpoint = $this->appendCbc($dom, $partyEl, 'EndpointID', $party->oib);
         $endpoint->setAttribute('schemeID', '9934');
 
         $address = $dom->createElementNS(self::NS_CAC, 'cac:PostalAddress');
-        $this->appendCbc($dom, $address, 'StreetName', $taxpayer->address_line);
-        $this->appendCbc($dom, $address, 'CityName', $taxpayer->city);
-        $this->appendCbc($dom, $address, 'PostalZone', $taxpayer->postcode);
+        $this->appendCbc($dom, $address, 'StreetName', $party->address_line);
+        $this->appendCbc($dom, $address, 'CityName', $party->city);
+        $this->appendCbc($dom, $address, 'PostalZone', $party->postcode);
 
         $country = $dom->createElementNS(self::NS_CAC, 'cac:Country');
-        $this->appendCbc($dom, $country, 'IdentificationCode', $taxpayer->country_code);
+        $this->appendCbc($dom, $country, 'IdentificationCode', $party->country_code);
         $address->appendChild($country);
-        $party->appendChild($address);
+        $partyEl->appendChild($address);
 
-        if ($taxpayer->is_vat_registered) {
+        if ($party->is_vat_registered) {
             $taxScheme = $dom->createElementNS(self::NS_CAC, 'cac:PartyTaxScheme');
-            $this->appendCbc($dom, $taxScheme, 'CompanyID', $taxpayer->country_code.$taxpayer->oib);
+            $this->appendCbc($dom, $taxScheme, 'CompanyID', $party->country_code.$party->oib);
             $scheme = $dom->createElementNS(self::NS_CAC, 'cac:TaxScheme');
             $this->appendCbc($dom, $scheme, 'ID', 'VAT');
             $taxScheme->appendChild($scheme);
-            $party->appendChild($taxScheme);
+            $partyEl->appendChild($taxScheme);
         }
 
         $legal = $dom->createElementNS(self::NS_CAC, 'cac:PartyLegalEntity');
-        $this->appendCbc($dom, $legal, 'RegistrationName', $taxpayer->name);
-        $party->appendChild($legal);
+        $this->appendCbc($dom, $legal, 'RegistrationName', $party->name);
+        $partyEl->appendChild($legal);
 
-        return $party;
+        return $partyEl;
     }
 
     private function appendPaymentMeans(DOMDocument $dom, DOMElement $root, Invoice $invoice): void

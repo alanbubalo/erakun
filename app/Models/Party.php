@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Database\Factories\TaxpayerFactory;
+use Database\Factories\PartyFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -19,9 +19,9 @@ use Override;
     'country_code',
     'iban',
 ])]
-class Taxpayer extends Model
+class Party extends Model
 {
-    /** @use HasFactory<TaxpayerFactory> */
+    /** @use HasFactory<PartyFactory> */
     use HasFactory;
 
     #[Override]

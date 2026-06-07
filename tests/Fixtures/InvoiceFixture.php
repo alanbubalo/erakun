@@ -7,13 +7,13 @@ use App\Enums\InvoiceStatus;
 use App\Enums\VatCategory;
 use App\Models\Invoice;
 use App\Models\InvoiceLine;
-use App\Models\Taxpayer;
+use App\Models\Party;
 
 class InvoiceFixture
 {
     public static function outbound(): Invoice
     {
-        $supplier = Taxpayer::factory()->create([
+        $supplier = Party::factory()->create([
             'oib' => '22222222226',
             'name' => 'TVRTKA A d.o.o.',
             'is_vat_registered' => true,
@@ -24,7 +24,7 @@ class InvoiceFixture
             'iban' => 'HR1723600001101234565',
         ]);
 
-        $buyer = Taxpayer::factory()->create([
+        $buyer = Party::factory()->create([
             'oib' => '11111111119',
             'name' => 'Tvrtka B d.o.o.',
             'is_vat_registered' => true,

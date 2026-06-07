@@ -3,7 +3,7 @@
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
 use App\Models\InvoiceLine;
-use App\Models\Taxpayer;
+use App\Models\Party;
 
 function validInvoicePayload(array $overrides = []): array
 {
@@ -35,8 +35,8 @@ function validInvoicePayload(array $overrides = []): array
 }
 
 it('creates an invoice with lines', function (): void {
-    $supplier = Taxpayer::factory()->create(['oib' => '12345678903']);
-    $buyer = Taxpayer::factory()->create(['oib' => '98765432106']);
+    $supplier = Party::factory()->create(['oib' => '12345678903']);
+    $buyer = Party::factory()->create(['oib' => '98765432106']);
 
     $response = $this->postJson('/api/invoices', validInvoicePayload());
 
@@ -61,8 +61,8 @@ it('creates an invoice with lines', function (): void {
 });
 
 it('computes net, tax, and gross totals from line vat rates', function (): void {
-    Taxpayer::factory()->create(['oib' => '12345678903']);
-    Taxpayer::factory()->create(['oib' => '98765432106']);
+    Party::factory()->create(['oib' => '12345678903']);
+    Party::factory()->create(['oib' => '98765432106']);
 
     $response = $this->postJson('/api/invoices', validInvoicePayload([
         'invoice_number' => 'RN-001',
@@ -85,8 +85,8 @@ it('computes net, tax, and gross totals from line vat rates', function (): void 
 });
 
 it('total_amount equals net_amount plus tax_amount (true gross)', function (): void {
-    Taxpayer::factory()->create(['oib' => '12345678903']);
-    Taxpayer::factory()->create(['oib' => '98765432106']);
+    Party::factory()->create(['oib' => '12345678903']);
+    Party::factory()->create(['oib' => '98765432106']);
 
     $response = $this->postJson('/api/invoices', validInvoicePayload());
 
@@ -98,8 +98,8 @@ it('total_amount equals net_amount plus tax_amount (true gross)', function (): v
 });
 
 it('accepts optional currency, due_date, and unit_code', function (): void {
-    Taxpayer::factory()->create(['oib' => '12345678903']);
-    Taxpayer::factory()->create(['oib' => '98765432106']);
+    Party::factory()->create(['oib' => '12345678903']);
+    Party::factory()->create(['oib' => '98765432106']);
 
     $response = $this->postJson('/api/invoices', validInvoicePayload([
         'currency' => 'USD',
@@ -124,8 +124,8 @@ it('accepts optional currency, due_date, and unit_code', function (): void {
 });
 
 it('defaults unit_code to H87 when omitted', function (): void {
-    Taxpayer::factory()->create(['oib' => '12345678903']);
-    Taxpayer::factory()->create(['oib' => '98765432106']);
+    Party::factory()->create(['oib' => '12345678903']);
+    Party::factory()->create(['oib' => '98765432106']);
 
     $response = $this->postJson('/api/invoices', validInvoicePayload());
 
@@ -134,7 +134,7 @@ it('defaults unit_code to H87 when omitted', function (): void {
 });
 
 it('rejects invoice with unknown supplier oib', function (): void {
-    Taxpayer::factory()->create(['oib' => '98765432106']);
+    Party::factory()->create(['oib' => '98765432106']);
 
     $response = $this->postJson('/api/invoices', validInvoicePayload([
         'supplier_oib' => '55555555551',
@@ -145,8 +145,8 @@ it('rejects invoice with unknown supplier oib', function (): void {
 });
 
 it('rejects invoice with no lines', function (): void {
-    Taxpayer::factory()->create(['oib' => '12345678903']);
-    Taxpayer::factory()->create(['oib' => '98765432106']);
+    Party::factory()->create(['oib' => '12345678903']);
+    Party::factory()->create(['oib' => '98765432106']);
 
     $response = $this->postJson('/api/invoices', validInvoicePayload(['lines' => []]));
 
@@ -155,8 +155,8 @@ it('rejects invoice with no lines', function (): void {
 });
 
 it('rejects line with non-positive quantity', function (): void {
-    Taxpayer::factory()->create(['oib' => '12345678903']);
-    Taxpayer::factory()->create(['oib' => '98765432106']);
+    Party::factory()->create(['oib' => '12345678903']);
+    Party::factory()->create(['oib' => '98765432106']);
 
     $response = $this->postJson('/api/invoices', validInvoicePayload([
         'lines' => [
@@ -169,8 +169,8 @@ it('rejects line with non-positive quantity', function (): void {
 });
 
 it('rejects line missing vat_rate', function (): void {
-    Taxpayer::factory()->create(['oib' => '12345678903']);
-    Taxpayer::factory()->create(['oib' => '98765432106']);
+    Party::factory()->create(['oib' => '12345678903']);
+    Party::factory()->create(['oib' => '98765432106']);
 
     $response = $this->postJson('/api/invoices', validInvoicePayload([
         'lines' => [
@@ -183,8 +183,8 @@ it('rejects line missing vat_rate', function (): void {
 });
 
 it('rejects line missing vat_category', function (): void {
-    Taxpayer::factory()->create(['oib' => '12345678903']);
-    Taxpayer::factory()->create(['oib' => '98765432106']);
+    Party::factory()->create(['oib' => '12345678903']);
+    Party::factory()->create(['oib' => '98765432106']);
 
     $response = $this->postJson('/api/invoices', validInvoicePayload([
         'lines' => [
@@ -197,8 +197,8 @@ it('rejects line missing vat_category', function (): void {
 });
 
 it('rejects line with invalid vat_category', function (): void {
-    Taxpayer::factory()->create(['oib' => '12345678903']);
-    Taxpayer::factory()->create(['oib' => '98765432106']);
+    Party::factory()->create(['oib' => '12345678903']);
+    Party::factory()->create(['oib' => '98765432106']);
 
     $response = $this->postJson('/api/invoices', validInvoicePayload([
         'lines' => [
@@ -211,8 +211,8 @@ it('rejects line with invalid vat_category', function (): void {
 });
 
 it('rejects line missing kpd_code', function (): void {
-    Taxpayer::factory()->create(['oib' => '12345678903']);
-    Taxpayer::factory()->create(['oib' => '98765432106']);
+    Party::factory()->create(['oib' => '12345678903']);
+    Party::factory()->create(['oib' => '98765432106']);
 
     $response = $this->postJson('/api/invoices', validInvoicePayload([
         'lines' => [
@@ -225,8 +225,8 @@ it('rejects line missing kpd_code', function (): void {
 });
 
 it('rejects due_date before issue_date', function (): void {
-    Taxpayer::factory()->create(['oib' => '12345678903']);
-    Taxpayer::factory()->create(['oib' => '98765432106']);
+    Party::factory()->create(['oib' => '12345678903']);
+    Party::factory()->create(['oib' => '98765432106']);
 
     $response = $this->postJson('/api/invoices', validInvoicePayload([
         'due_date' => '2026-04-01',
@@ -269,7 +269,7 @@ it('filters invoices by direction', function (): void {
 });
 
 it('filters invoices by supplier oib', function (): void {
-    $supplier = Taxpayer::factory()->create();
+    $supplier = Party::factory()->create();
     Invoice::factory()->for($supplier, 'supplier')->create();
     Invoice::factory()->create();
 
@@ -280,7 +280,7 @@ it('filters invoices by supplier oib', function (): void {
 });
 
 it('filters invoices by buyer oib', function (): void {
-    $buyer = Taxpayer::factory()->create();
+    $buyer = Party::factory()->create();
     Invoice::factory()->for($buyer, 'buyer')->create();
     Invoice::factory()->create();
 

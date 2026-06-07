@@ -32,8 +32,8 @@ class InvoiceResource extends JsonResource
         return [
             'id' => $this->id,
             'invoice_number' => $this->invoice_number,
-            'supplier' => TaxpayerResource::make($this->supplier),
-            'buyer' => TaxpayerResource::make($this->buyer),
+            'supplier' => PartyResource::make($this->supplier),
+            'buyer' => PartyResource::make($this->buyer),
             'issue_date' => $this->issue_date->format('Y-m-d'),
             'due_date' => $this->due_date?->format('Y-m-d'),
             'status' => $this->status->value,

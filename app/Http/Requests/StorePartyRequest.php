@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use App\Rules\Oib;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreTaxpayerRequest extends FormRequest
+class StorePartyRequest extends FormRequest
 {
     /**
      * @return array<string, mixed>
@@ -13,7 +13,7 @@ class StoreTaxpayerRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'oib' => ['required', 'string', new Oib, 'unique:taxpayers,oib'],
+            'oib' => ['required', 'string', new Oib, 'unique:parties,oib'],
             'name' => ['required', 'string', 'max:255'],
             'is_vat_registered' => ['sometimes', 'boolean'],
             'address_line' => ['required', 'string', 'max:255'],

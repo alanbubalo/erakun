@@ -10,7 +10,7 @@ use App\Enums\InvoiceDirection;
 use App\Enums\InvoiceStatus;
 use App\Models\As4Message;
 use App\Models\Invoice;
-use App\Models\Taxpayer;
+use App\Models\Party;
 
 function ublFixtureFor5c(string $name = 'valid-hr-cius.xml'): string
 {
@@ -53,9 +53,9 @@ function postAs4Envelope(string $envelopeXml)
     );
 }
 
-function registerLocalBuyer(): Taxpayer
+function registerLocalBuyer(): Party
 {
-    return Taxpayer::factory()->create([
+    return Party::factory()->create([
         'oib' => '11111111119',
         'name' => 'Tvrtka B d.o.o.',
         'is_vat_registered' => true,

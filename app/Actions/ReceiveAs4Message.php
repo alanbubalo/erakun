@@ -13,7 +13,7 @@ use App\Enums\As4MessageState;
 use App\Exceptions\As4InboundException;
 use App\Exceptions\InvoiceValidationException;
 use App\Models\As4Message;
-use App\Models\Taxpayer;
+use App\Models\Party;
 use App\Validation\UblValidator;
 use App\Validation\ValidationReport;
 use Carbon\CarbonImmutable;
@@ -57,7 +57,7 @@ class ReceiveAs4Message
             return $this->replayResult($existing);
         }
 
-        if (! Taxpayer::where('oib', $metadata['toOib'])->exists()) {
+        if (! Party::where('oib', $metadata['toOib'])->exists()) {
             return $this->errorResult(new As4InboundException(
                 'EBMS:0005',
                 "Recipient OIB {$metadata['toOib']} is not registered with this intermediary.",

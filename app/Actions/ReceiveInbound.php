@@ -6,7 +6,7 @@ use App\Enums\InvoiceDirection;
 use App\Enums\InvoiceStatus;
 use App\Exceptions\InvoiceValidationException;
 use App\Models\Invoice;
-use App\Models\Taxpayer;
+use App\Models\Party;
 use App\Validation\ValidationIssue;
 use App\Validation\ValidationReport;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +16,7 @@ final class ReceiveInbound
     public function execute(ParsedInvoice $parsed, string $rawXml): Invoice
     {
         return DB::transaction(function () use ($parsed, $rawXml) {
-            $supplier = Taxpayer::firstOrCreate(
+            $supplier = Party::firstOrCreate(
                 ['oib' => $parsed->supplier->oib],
                 [
                     'name' => $parsed->supplier->name,
@@ -29,7 +29,7 @@ final class ReceiveInbound
                 ],
             );
 
-            $buyer = Taxpayer::where('oib', $parsed->buyer->oib)->first();
+            $buyer = Party::where('oib', $parsed->buyer->oib)->first();
             if ($buyer === null) {
                 throw new InvoiceValidationException(new ValidationReport([
                     new ValidationIssue(

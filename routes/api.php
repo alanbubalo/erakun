@@ -10,15 +10,15 @@ use App\Http\Controllers\InvoiceFiscalizationController;
 use App\Http\Controllers\InvoiceStatusController;
 use App\Http\Controllers\InvoiceXmlController;
 use App\Http\Controllers\MpsParticipantController;
-use App\Http\Controllers\TaxpayerController;
+use App\Http\Controllers\PartyController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => response()->json([
     'message' => 'Welcome to eRakun API',
 ]));
 
-Route::post('/taxpayers', [TaxpayerController::class, 'store']);
-Route::get('/taxpayers/{taxpayer}', [TaxpayerController::class, 'show']);
+Route::post('/parties', [PartyController::class, 'store']);
+Route::get('/parties/{party}', [PartyController::class, 'show']);
 
 Route::post('/invoices', [InvoiceController::class, 'store']);
 Route::post('/invoices/inbound', [InboundInvoiceController::class, 'store']);

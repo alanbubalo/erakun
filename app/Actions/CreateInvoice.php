@@ -4,7 +4,7 @@ namespace App\Actions;
 
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
-use App\Models\Taxpayer;
+use App\Models\Party;
 use Illuminate\Support\Facades\DB;
 
 class CreateInvoice
@@ -15,8 +15,8 @@ class CreateInvoice
     public function execute(array $data): Invoice
     {
         return DB::transaction(function () use ($data) {
-            $supplier = Taxpayer::where('oib', $data['supplier_oib'])->firstOrFail();
-            $buyer = Taxpayer::where('oib', $data['buyer_oib'])->firstOrFail();
+            $supplier = Party::where('oib', $data['supplier_oib'])->firstOrFail();
+            $buyer = Party::where('oib', $data['buyer_oib'])->firstOrFail();
 
             $lines = [];
             $netAmount = '0.00';

@@ -5,7 +5,7 @@ use App\Actions\UblGenerator;
 use App\Enums\InvoiceDirection;
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
-use App\Models\Taxpayer;
+use App\Models\Party;
 use Tests\Fixtures\InvoiceFixture;
 
 function buildSignedInboundXml(): string
@@ -15,7 +15,7 @@ function buildSignedInboundXml(): string
     $xml = $signed->saveXML();
 
     Invoice::query()->delete();
-    Taxpayer::where('oib', $invoice->supplier->oib)->delete();
+    Party::where('oib', $invoice->supplier->oib)->delete();
 
     return $xml;
 }
@@ -39,7 +39,7 @@ it('persists a fresh inbound invoice and auto-creates the supplier (201)', funct
     expect($invoice->ubl_xml)->toBe($xml);
     expect($invoice->lines)->toHaveCount(1);
 
-    expect(Taxpayer::where('oib', '22222222226')->exists())->toBeTrue();
+    expect(Party::where('oib', '22222222226')->exists())->toBeTrue();
 });
 
 it('returns 200 on idempotent re-receipt without duplicating the invoice', function (): void {
@@ -56,7 +56,7 @@ it('returns 200 on idempotent re-receipt without duplicating the invoice', funct
 
 it('rejects inbound XML when buyer OIB is unknown (422)', function (): void {
     $xml = buildSignedInboundXml();
-    Taxpayer::where('oib', '11111111119')->delete();
+    Party::where('oib', '11111111119')->delete();
 
     $response = postInboundXml($xml);
 

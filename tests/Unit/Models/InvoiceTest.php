@@ -5,18 +5,18 @@ use App\Enums\InvoiceStatus;
 use App\Enums\VatCategory;
 use App\Models\Invoice;
 use App\Models\InvoiceLine;
-use App\Models\Taxpayer;
+use App\Models\Party;
 use Illuminate\Support\Carbon;
 
 it('belongs to a supplier', function (): void {
-    $supplier = Taxpayer::factory()->create();
+    $supplier = Party::factory()->create();
     $invoice = Invoice::factory()->for($supplier, 'supplier')->create();
 
     expect($invoice->supplier->id)->toBe($supplier->id);
 });
 
 it('belongs to a buyer', function (): void {
-    $buyer = Taxpayer::factory()->create();
+    $buyer = Party::factory()->create();
     $invoice = Invoice::factory()->for($buyer, 'buyer')->create();
 
     expect($invoice->buyer->id)->toBe($buyer->id);
@@ -57,8 +57,8 @@ it('casts issue_date to a date', function (): void {
 });
 
 it('reports the supplier OIB for outbound invoices', function (): void {
-    $supplier = Taxpayer::factory()->create(['oib' => '12345678901']);
-    $buyer = Taxpayer::factory()->create(['oib' => '98765432109']);
+    $supplier = Party::factory()->create(['oib' => '12345678901']);
+    $buyer = Party::factory()->create(['oib' => '98765432109']);
     $invoice = Invoice::factory()
         ->outbound()
         ->for($supplier, 'supplier')
@@ -69,8 +69,8 @@ it('reports the supplier OIB for outbound invoices', function (): void {
 });
 
 it('reports the buyer OIB for inbound invoices', function (): void {
-    $supplier = Taxpayer::factory()->create(['oib' => '12345678901']);
-    $buyer = Taxpayer::factory()->create(['oib' => '98765432109']);
+    $supplier = Party::factory()->create(['oib' => '12345678901']);
+    $buyer = Party::factory()->create(['oib' => '98765432109']);
     $invoice = Invoice::factory()
         ->inbound()
         ->for($supplier, 'supplier')

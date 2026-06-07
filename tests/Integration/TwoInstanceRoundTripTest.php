@@ -64,7 +64,7 @@ beforeEach(function (): void {
     // The receiver rejects invoices for an unregistered buyer; ensure it exists
     // on B (the peer DB is migrated fresh once at boot, so a duplicate POST on a
     // later test simply 422s — harmless).
-    PeerProcess::api('POST', '/api/taxpayers', [
+    PeerProcess::api('POST', '/api/parties', [
         'oib' => '11111111119',
         'name' => 'Tvrtka B d.o.o.',
         'address_line' => 'Ulica 2',

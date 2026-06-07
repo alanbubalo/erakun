@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('invoices', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('supplier_id')->constrained('taxpayers');
-            $table->foreignId('buyer_id')->constrained('taxpayers');
+            $table->foreignId('supplier_id')->constrained('parties');
+            $table->foreignId('buyer_id')->constrained('parties');
             $table->string('invoice_number');
             $table->date('issue_date');
             $table->date('due_date')->nullable();

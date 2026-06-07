@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Models\Taxpayer;
+use App\Models\Party;
 use Illuminate\Http\JsonResponse;
 
 /**
  * MPS (Metadata service) — publishes how to reach the participants we serve.
- * Derived from the `taxpayers` table plus config; no backing table of its own.
+ * Derived from the `parties` table plus config; no backing table of its own.
  */
 class MpsParticipantController extends Controller
 {
     public function show(string $oib): JsonResponse
     {
-        abort_unless(Taxpayer::query()->where('oib', $oib)->exists(), 404);
+        abort_unless(Party::query()->where('oib', $oib)->exists(), 404);
 
         return new JsonResponse([
             'oib' => $oib,

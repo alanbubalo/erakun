@@ -5,7 +5,7 @@ namespace Database\Factories;
 use App\Enums\InvoiceDirection;
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
-use App\Models\Taxpayer;
+use App\Models\Party;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -20,8 +20,8 @@ class InvoiceFactory extends Factory
         $taxAmount = round($netAmount * 0.25, 2);
 
         return [
-            'supplier_id' => Taxpayer::factory(),
-            'buyer_id' => Taxpayer::factory(),
+            'supplier_id' => Party::factory(),
+            'buyer_id' => Party::factory(),
             'invoice_number' => fake()->unique()->numerify('EINV-####-####'),
             'issue_date' => $issueDate,
             'due_date' => fake()->dateTimeBetween($issueDate, '+30 days'),

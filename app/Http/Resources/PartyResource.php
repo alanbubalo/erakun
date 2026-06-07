@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
-use App\Models\Taxpayer;
+use App\Models\Party;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Override;
 
-/** @mixin Taxpayer */
-class TaxpayerResource extends JsonResource
+/** @mixin Party */
+class PartyResource extends JsonResource
 {
     /**
      * @return array<string, mixed>

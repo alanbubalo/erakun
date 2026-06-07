@@ -61,19 +61,19 @@ class Invoice extends Model
     }
 
     /**
-     * @return BelongsTo<Taxpayer, $this>
+     * @return BelongsTo<Party, $this>
      */
     public function supplier(): BelongsTo
     {
-        return $this->belongsTo(Taxpayer::class, 'supplier_id');
+        return $this->belongsTo(Party::class, 'supplier_id');
     }
 
     /**
-     * @return BelongsTo<Taxpayer, $this>
+     * @return BelongsTo<Party, $this>
      */
     public function buyer(): BelongsTo
     {
-        return $this->belongsTo(Taxpayer::class, 'buyer_id');
+        return $this->belongsTo(Party::class, 'buyer_id');
     }
 
     /**

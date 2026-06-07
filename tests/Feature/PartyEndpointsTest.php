@@ -1,14 +1,14 @@
 <?php
 
-use App\Models\Taxpayer;
+use App\Models\Party;
 use Illuminate\Support\Facades\Http;
 
 // Onboarding announces the participant to the AMS over HTTP; fake it so these
 // endpoint tests stay isolated from the directory.
 beforeEach(fn () => Http::fake());
 
-it('registers a taxpayer', function (): void {
-    $response = $this->postJson('/api/taxpayers', [
+it('registers a party', function (): void {
+    $response = $this->postJson('/api/parties', [
         'oib' => '12345678903',
         'name' => 'Salon Ljepota d.o.o.',
         'is_vat_registered' => true,
@@ -33,11 +33,11 @@ it('registers a taxpayer', function (): void {
             ],
         ]);
 
-    $this->assertDatabaseHas('taxpayers', ['oib' => '12345678903']);
+    $this->assertDatabaseHas('parties', ['oib' => '12345678903']);
 });
 
 it('defaults is_vat_registered to false and country_code to HR', function (): void {
-    $response = $this->postJson('/api/taxpayers', [
+    $response = $this->postJson('/api/parties', [
         'oib' => '12345678903',
         'name' => 'Test d.o.o.',
         'address_line' => 'Ilica 1',
@@ -56,9 +56,9 @@ it('defaults is_vat_registered to false and country_code to HR', function (): vo
 });
 
 it('rejects duplicate oib', function (): void {
-    Taxpayer::factory()->create(['oib' => '12345678903']);
+    Party::factory()->create(['oib' => '12345678903']);
 
-    $response = $this->postJson('/api/taxpayers', [
+    $response = $this->postJson('/api/parties', [
         'oib' => '12345678903',
         'name' => 'Another Company',
         'address_line' => 'Ilica 1',
@@ -71,7 +71,7 @@ it('rejects duplicate oib', function (): void {
 });
 
 it('rejects invalid oib format', function (): void {
-    $response = $this->postJson('/api/taxpayers', [
+    $response = $this->postJson('/api/parties', [
         'oib' => '123',
         'name' => 'Bad OIB',
         'address_line' => 'Ilica 1',
@@ -84,7 +84,7 @@ it('rejects invalid oib format', function (): void {
 });
 
 it('requires name', function (): void {
-    $response = $this->postJson('/api/taxpayers', [
+    $response = $this->postJson('/api/parties', [
         'oib' => '12345678903',
         'address_line' => 'Ilica 1',
         'city' => 'Zagreb',
@@ -96,7 +96,7 @@ it('requires name', function (): void {
 });
 
 it('requires address_line, city, and postcode', function (): void {
-    $response = $this->postJson('/api/taxpayers', [
+    $response = $this->postJson('/api/parties', [
         'oib' => '12345678903',
         'name' => 'Test d.o.o.',
     ]);
@@ -106,7 +106,7 @@ it('requires address_line, city, and postcode', function (): void {
 });
 
 it('rejects postcode that is not 5 characters', function (): void {
-    $response = $this->postJson('/api/taxpayers', [
+    $response = $this->postJson('/api/parties', [
         'oib' => '12345678903',
         'name' => 'Test d.o.o.',
         'address_line' => 'Ilica 1',
@@ -118,22 +118,22 @@ it('rejects postcode that is not 5 characters', function (): void {
         ->assertJsonValidationErrors('postcode');
 });
 
-it('shows a taxpayer by oib', function (): void {
-    $taxpayer = Taxpayer::factory()->create(['oib' => '12345678903']);
+it('shows a party by oib', function (): void {
+    $party = Party::factory()->create(['oib' => '12345678903']);
 
-    $response = $this->getJson('/api/taxpayers/12345678903');
+    $response = $this->getJson('/api/parties/12345678903');
 
     $response->assertOk()
         ->assertJson([
             'data' => [
                 'oib' => '12345678903',
-                'name' => $taxpayer->name,
+                'name' => $party->name,
             ],
         ]);
 });
 
 it('returns 404 for unknown oib', function (): void {
-    $response = $this->getJson('/api/taxpayers/00000000000');
+    $response = $this->getJson('/api/parties/00000000000');
 
     $response->assertNotFound();
 });
