@@ -21,7 +21,7 @@ return new class extends Migration
             $table->decimal('net_amount', 12, 2);
             $table->decimal('tax_amount', 12, 2);
             $table->decimal('total_amount', 12, 2);
-            $table->text('ubl_xml')->nullable();
+            $table->string('ubl_xml_path')->nullable();
             $table->timestamps();
         });
     }

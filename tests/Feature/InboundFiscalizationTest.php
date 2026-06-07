@@ -197,7 +197,7 @@ describe('end-to-end round trip (uparivanje)', function (): void {
 /** Produce a signed UBL for the same (supplier, buyer, invoice_number) but with different totals. */
 function tamperedInboundUbl(Invoice $outbound): string
 {
-    $tampered = $outbound->replicate(['ubl_xml']);
+    $tampered = $outbound->replicate(['ubl_xml_path']);
     $tampered->net_amount = '200.00';
     $tampered->tax_amount = '50.00';
     $tampered->total_amount = '250.00';

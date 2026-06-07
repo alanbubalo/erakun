@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\DB;
 
 final class ReceiveInbound
 {
+    public function __construct(
+        private readonly StoreInvoiceUbl $storeUbl,
+    ) {}
+
     public function execute(ParsedInvoice $parsed, string $rawXml): Invoice
     {
         return DB::transaction(function () use ($parsed, $rawXml) {
@@ -63,8 +67,9 @@ final class ReceiveInbound
                 'net_amount' => $parsed->netAmount,
                 'tax_amount' => $parsed->taxAmount,
                 'total_amount' => $parsed->totalAmount,
-                'ubl_xml' => $rawXml,
             ]);
+
+            $this->storeUbl->execute($invoice, $rawXml);
 
             foreach ($parsed->lines as $line) {
                 $invoice->lines()->create([

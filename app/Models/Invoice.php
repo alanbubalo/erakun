@@ -8,11 +8,13 @@ use App\Enums\InvoiceDirection;
 use App\Enums\InvoiceStatus;
 use Database\Factories\InvoiceFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Override;
 
 /**
@@ -25,7 +27,8 @@ use Override;
  * @property string $net_amount
  * @property string $tax_amount
  * @property string $total_amount
- * @property string|null $ubl_xml
+ * @property string|null $ubl_xml_path
+ * @property-read string|null $ubl_xml
  */
 #[Fillable([
     'supplier_id',
@@ -39,7 +42,7 @@ use Override;
     'net_amount',
     'tax_amount',
     'total_amount',
-    'ubl_xml',
+    'ubl_xml_path',
 ])]
 class Invoice extends Model
 {
@@ -58,6 +61,27 @@ class Invoice extends Model
             'tax_amount' => 'decimal:2',
             'total_amount' => 'decimal:2',
         ];
+    }
+
+    /**
+     * Read-only view of the signed/raw UBL document, streamed from the
+     * configured filesystem disk. Only a path is persisted in the DB
+     * (see the StoreInvoiceUbl action); never eager-select this
+     * in list queries.
+     */
+    protected function ublXml(): Attribute
+    {
+        return Attribute::get(function (): ?string {
+            if ($this->ubl_xml_path === null) {
+                return null;
+            }
+
+            $disk = Storage::disk();
+
+            return $disk->exists($this->ubl_xml_path)
+                ? $disk->get($this->ubl_xml_path)
+                : null;
+        });
     }
 
     /**

@@ -20,6 +20,7 @@ class TransitionInvoiceStatus
         private readonly UblValidator $validator,
         private readonly SubmitAs4Delivery $submitAs4Delivery,
         private readonly SubmitFiscalization $submitFiscalization,
+        private readonly StoreInvoiceUbl $storeUbl,
     ) {}
 
     public function execute(Invoice $invoice, InvoiceStatus $target): Invoice
@@ -30,13 +31,18 @@ class TransitionInvoiceStatus
             ]);
         }
 
-        $update = ['status' => $target];
+        // Generate (and validate) before mutating status so an invalid document
+        // leaves the invoice in its current state — generateSignedXml throws.
+        $signedXml = $this->shouldGenerateUbl($invoice, $target)
+            ? $this->generateSignedXml($invoice)
+            : null;
 
-        if ($this->shouldGenerateUbl($invoice, $target)) {
-            $update['ubl_xml'] = $this->generateSignedXml($invoice);
+        $invoice->update(['status' => $target]);
+
+        if ($signedXml !== null) {
+            $this->storeUbl->execute($invoice, $signedXml);
         }
 
-        $invoice->update($update);
         $invoice->load('supplier', 'buyer', 'lines');
 
         if ($this->shouldDeliver($invoice, $target)) {

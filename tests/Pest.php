@@ -3,9 +3,14 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class)->in('Feature', 'Unit', 'Integration');
+
+// UBL documents live on the filesystem disk (only a path is persisted in the DB).
+// Fake the default disk per test so the persistence pipeline never touches real storage.
+uses()->beforeEach(fn () => Storage::fake())->in('Feature', 'Unit', 'Integration');
 
 function fiscAcceptedEnvelope(string $messageId = 'FIS-2026-000042', string $matchStatus = 'pending'): string
 {
