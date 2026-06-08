@@ -23,12 +23,12 @@ class SubmitFiscalization
         private readonly PartySigningCredentials $signingCredentials,
     ) {}
 
-    public function execute(Invoice $invoice, string $reporterOib): FiscalMessage
+    public function execute(Invoice $invoice, string $reporterOib): SubmissionResult
     {
         $existing = $invoice->latestFiscalMessageFor($reporterOib);
 
         if ($existing instanceof FiscalMessage && $existing->state === FiscalMessageState::Accepted) {
-            return $existing;
+            return new SubmissionResult(SubmissionOutcome::AlreadyTerminal, $existing);
         }
 
         $dom = $this->builder->build($invoice, $reporterOib);
@@ -61,7 +61,7 @@ class SubmitFiscalization
             'settled_at' => now(),
         ]);
 
-        return $message->refresh();
+        return new SubmissionResult(SubmissionOutcome::Submitted, $message->refresh());
     }
 
     private function upsertRequested(

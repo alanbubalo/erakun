@@ -6,8 +6,8 @@ use App\Enums\InvoiceDirection;
 use App\Enums\InvoiceStatus;
 use App\Exceptions\As4DeliveryFailedException;
 use App\Exceptions\FiscalizationException;
+use App\Exceptions\InvalidInvoiceTransitionException;
 use App\Models\Invoice;
-use Illuminate\Validation\ValidationException;
 
 class TransitionInvoiceStatus
 {
@@ -20,10 +20,12 @@ class TransitionInvoiceStatus
 
     public function execute(Invoice $invoice, InvoiceStatus $target): Invoice
     {
+        // Fail fast on an illegal transition before doing any work — otherwise a
+        // bad hop into a UBL-generating state would render (and possibly fail
+        // differently) before transitionTo() rejects it. transitionTo() re-guards
+        // authoritatively, so it stays the single safe path for every caller.
         if (! $invoice->status->canTransitionTo($target)) {
-            throw ValidationException::withMessages([
-                'status' => "Cannot transition from {$invoice->status->value} to {$target->value}.",
-            ]);
+            throw new InvalidInvoiceTransitionException($invoice->status, $target);
         }
 
         // Render (and validate) before mutating status so an invalid document
@@ -32,7 +34,7 @@ class TransitionInvoiceStatus
             ? $this->renderer->signed($invoice)
             : null;
 
-        $invoice->update(['status' => $target]);
+        $invoice->transitionTo($target);
 
         if ($signedXml !== null) {
             $this->storeUbl->execute($invoice, $signedXml);

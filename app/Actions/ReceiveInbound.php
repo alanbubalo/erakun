@@ -60,19 +60,23 @@ final readonly class ReceiveInbound
                 return $existing->load('supplier', 'buyer', 'lines');
             }
 
-            $invoice = Invoice::create([
+            $invoice = new Invoice([
                 'supplier_id' => $supplier->id,
                 'buyer_id' => $buyer->id,
                 'invoice_number' => $parsed->invoiceNumber,
                 'issue_date' => $parsed->issueDate,
                 'due_date' => $parsed->dueDate,
                 'direction' => InvoiceDirection::Inbound,
-                'status' => InvoiceStatus::Received,
                 'currency' => $parsed->currency,
                 'net_amount' => $parsed->netAmount,
                 'tax_amount' => $parsed->taxAmount,
                 'total_amount' => $parsed->totalAmount,
             ]);
+
+            // status is intentionally not mass-assignable; Received is the
+            // birth state for an inbound invoice.
+            $invoice->status = InvoiceStatus::Received;
+            $invoice->save();
 
             $this->storeUbl->execute($invoice, $rawXml);
 

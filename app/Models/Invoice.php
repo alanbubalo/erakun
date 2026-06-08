@@ -6,6 +6,7 @@ use App\Enums\As4MessageDirection;
 use App\Enums\FiscalMessageType;
 use App\Enums\InvoiceDirection;
 use App\Enums\InvoiceStatus;
+use App\Exceptions\InvalidInvoiceTransitionException;
 use Database\Factories\InvoiceFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -36,7 +37,6 @@ use Override;
     'invoice_number',
     'issue_date',
     'due_date',
-    'status',
     'direction',
     'currency',
     'net_amount',
@@ -82,6 +82,16 @@ class Invoice extends Model
                 ? $disk->get($this->ubl_xml_path)
                 : null;
         });
+    }
+
+    public function transitionTo(InvoiceStatus $target): void
+    {
+        if (! $this->status->canTransitionTo($target)) {
+            throw new InvalidInvoiceTransitionException($this->status, $target);
+        }
+
+        $this->status = $target;
+        $this->save();
     }
 
     /**

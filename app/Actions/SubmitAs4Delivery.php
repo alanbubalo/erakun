@@ -18,12 +18,12 @@ class SubmitAs4Delivery
         private readonly As4DeliveryService $delivery,
     ) {}
 
-    public function execute(Invoice $invoice): ?As4Message
+    public function execute(Invoice $invoice): SubmissionResult
     {
         $existing = $invoice->latestAs4MessageFor(As4MessageDirection::Outbound);
 
         if ($existing instanceof As4Message && $existing->state === As4MessageState::Acknowledged) {
-            return $existing;
+            return new SubmissionResult(SubmissionOutcome::AlreadyTerminal, $existing);
         }
 
         $invoice->loadMissing('supplier', 'buyer');
@@ -36,7 +36,7 @@ class SubmitAs4Delivery
         // always populates it; reaching here without one means the caller bypassed
         // generation (factory-built fixtures, seeds). Nothing to deliver.
         if ($ublXml === null || $ublXml === '') {
-            return null;
+            return new SubmissionResult(SubmissionOutcome::Skipped);
         }
 
         try {
@@ -45,7 +45,7 @@ class SubmitAs4Delivery
             throw $this->persistErrorAndWrap($invoice, $e, $senderOib, $recipientOib);
         }
 
-        return $invoice->as4Messages()->create([
+        $message = $invoice->as4Messages()->create([
             'direction' => As4MessageDirection::Outbound,
             'message_id' => $receipt->messageId,
             'ref_to_message_id' => $receipt->receiptMessageId,
@@ -57,6 +57,8 @@ class SubmitAs4Delivery
             'sent_at' => now(),
             'acknowledged_at' => $receipt->acknowledgedAt,
         ]);
+
+        return new SubmissionResult(SubmissionOutcome::Submitted, $message);
     }
 
     private function persistErrorAndWrap(
