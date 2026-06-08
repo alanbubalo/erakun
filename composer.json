@@ -58,17 +58,16 @@
             "@php artisan config:clear --ansi",
             "@php artisan test --parallel"
         ],
-        "lint": [
-            "./vendor/bin/pint"
-        ],
-        "analyse": [
-            "./vendor/bin/phpstan analyse --memory-limit=256M"
-        ],
-        "rector": [
-            "./vendor/bin/rector process"
-        ],
-        "rector:dry": [
-            "./vendor/bin/rector process --dry-run"
+        "lint": "pint",
+        "lint:test": "pint --test",
+        "refactor": "rector process",
+        "refactor:test": "rector process --dry-run",
+        "analyse": "phpstan analyse --memory-limit=512M",
+        "check": [
+            "@lint:test",
+            "@refactor:test",
+            "@analyse",
+            "@test"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
