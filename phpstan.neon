@@ -5,3 +5,12 @@ parameters:
     level: 5
     paths:
         - app/
+    ignoreErrors:
+        # xmlseclibs types addReference()'s $node as DOMDocument in its docblock,
+        # but it accepts any DOMNode — we pass DOMElements (the payload / signed
+        # properties) by design.
+        -
+            message: '#Parameter \#1 \$node of method RobRichards\\XMLSecLibs\\XMLSecurityDSig::addReference\(\) expects DOMDocument, DOMElement given\.#'
+            paths:
+                - app/Actions/InvoiceSigner.php
+                - app/As4/As4EnvelopeSigner.php

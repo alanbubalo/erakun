@@ -25,6 +25,10 @@ class As4EnvelopeBuilder
 
     public const string PAYLOAD_ID = 'ubl';
 
+    // WS-Security utility namespace — carries the wsu:Id the transport signature
+    // references the payload by.
+    public const string NS_WSU = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd';
+
     public function build(
         string $ublXml,
         string $messageId,
@@ -38,6 +42,7 @@ class As4EnvelopeBuilder
         $envelope = $dom->createElementNS(self::NS_SOAP, 'soap:Envelope');
         $envelope->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:eb', self::NS_EB);
         $envelope->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:as4', self::NS_AS4);
+        $envelope->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:wsu', self::NS_WSU);
         $dom->appendChild($envelope);
 
         $envelope->appendChild($this->buildHeader($dom, $messageId, $senderOib, $recipientOib));
@@ -132,6 +137,8 @@ class As4EnvelopeBuilder
 
         $wrapper = $dom->createElementNS(self::NS_AS4, 'as4:UblPayload');
         $wrapper->setAttribute('id', self::PAYLOAD_ID);
+        // The transport signature references the payload by this wsu:Id.
+        $wrapper->setAttributeNS(self::NS_WSU, 'wsu:Id', self::PAYLOAD_ID);
         $wrapper->appendChild($this->importUbl($dom, $ublXml));
         $body->appendChild($wrapper);
 

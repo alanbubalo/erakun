@@ -40,6 +40,16 @@ return [
             'report' => false,
         ],
 
+        // Test PKI material (root CAs, access point + party keys). Rooted under
+        // the gitignored storage/app/private tree; 'throw' surfaces missing keys
+        // loudly rather than signing/verifying with null bytes.
+        'pki' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/pki'),
+            'throw' => true,
+            'report' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

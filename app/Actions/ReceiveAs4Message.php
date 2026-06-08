@@ -12,6 +12,7 @@ use App\Enums\As4MessageDirection;
 use App\Enums\As4MessageState;
 use App\Exceptions\As4InboundException;
 use App\Exceptions\InvoiceValidationException;
+use App\Exceptions\SignatureVerificationException;
 use App\Models\As4Message;
 use App\Models\Party;
 use App\Validation\UblValidator;
@@ -27,8 +28,6 @@ use Throwable;
 
 class ReceiveAs4Message
 {
-    private const string NS_DS = 'http://www.w3.org/2000/09/xmldsig#';
-
     private const string NS_UBL_INVOICE = 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2';
 
     private const int HTTP_OK = 200;
@@ -41,6 +40,7 @@ class ReceiveAs4Message
         private readonly ReceiveInbound $receiveInbound,
         private readonly As4ReceiptBuilder $receiptBuilder,
         private readonly As4ErrorBuilder $errorBuilder,
+        private readonly SignatureVerifier $signatureVerifier,
     ) {}
 
     public function execute(string $envelopeXml): ReceiveAs4Result
@@ -48,7 +48,7 @@ class ReceiveAs4Message
         try {
             $dom = $this->parseAndValidateEnvelope($envelopeXml);
             $metadata = $this->extractMetadata($dom);
-            $this->assertSignaturePresent($dom);
+            $this->verifyEnvelopeSignature($dom);
         } catch (As4InboundException $e) {
             return $this->errorResult($e);
         }
@@ -164,14 +164,21 @@ class ReceiveAs4Message
         return ['messageId' => $messageId, 'fromOib' => $fromOib, 'toOib' => $toOib];
     }
 
-    private function assertSignaturePresent(DOMDocument $dom): void
+    /**
+     * Verify the access point's WS-Security signature on the envelope: digest
+     * match over the payload and a certificate chaining to a trusted CA. The
+     * inner UBL's own (XAdES) signature is verified later, during ingestion.
+     */
+    private function verifyEnvelopeSignature(DOMDocument $dom): void
     {
-        $signatures = $dom->getElementsByTagNameNS(self::NS_DS, 'Signature');
-
-        throw_if($signatures->length === 0,
-            As4InboundException::class,
-            'EBMS:0009',
-            'AS4 envelope is missing the required <ds:Signature> element.');
+        try {
+            $this->signatureVerifier->verify($dom, '//*[local-name()="Security"]/ds:Signature');
+        } catch (SignatureVerificationException $e) {
+            throw new As4InboundException(
+                'EBMS:0009',
+                'AS4 envelope signature is missing or invalid: '.$e->getMessage(),
+            );
+        }
     }
 
     private function extractUblPayload(DOMDocument $dom): string

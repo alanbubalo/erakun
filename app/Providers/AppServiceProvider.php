@@ -15,8 +15,12 @@ use App\As4\Http\HttpAs4DeliveryService;
 use App\As4\PeerEndpointResolver;
 use App\Fiscalization\FiscalizationService;
 use App\Fiscalization\Http\HttpFiscalizationService;
+use App\Pki\AccessPointCredential;
+use App\Pki\TestPkiGenerator;
+use App\Pki\TrustStore;
 use App\Validation\UblValidator;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
 use Override;
 
@@ -58,6 +62,31 @@ class AppServiceProvider extends ServiceProvider
             signer: $app->make(As4EnvelopeSigner::class),
             peers: $app->make(PeerEndpointResolver::class),
             timeout: (int) config('services.as4.timeout'),
+        ));
+
+        $this->app->singleton(TestPkiGenerator::class, fn (): TestPkiGenerator => new TestPkiGenerator(
+            disk: Storage::disk((string) config('pki.disk')),
+            opensslConfig: (string) config('pki.openssl_config'),
+            caDays: (int) config('pki.ca_days'),
+            leafDays: (int) config('pki.leaf_days'),
+        ));
+
+        $this->app->singleton(AccessPointCredential::class, fn (): AccessPointCredential => new AccessPointCredential(
+            disk: Storage::disk((string) config('pki.disk')),
+        ));
+
+        // Trusts both test roots: party (FINA-like) and access point (OpenPEPPOL-like).
+        // The anchors load lazily (only when a signature is verified) so resolving
+        // the verifier never fails before the PKI has been generated.
+        $this->app->singleton(TrustStore::class, fn (Application $app): TrustStore => new TrustStore(
+            loader: function () use ($app): array {
+                $generator = $app->make(TestPkiGenerator::class);
+
+                return [
+                    $generator->caCertificatePem(TestPkiGenerator::FINA_CA_CERT),
+                    $generator->caCertificatePem(TestPkiGenerator::PEPPOL_CA_CERT),
+                ];
+            },
         ));
     }
 

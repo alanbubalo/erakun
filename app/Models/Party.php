@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Enums\CertificateStatus;
 use Database\Factories\PartyFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Override;
 
 #[Fillable([
@@ -58,5 +60,25 @@ class Party extends Model
     public function receivedInvoices(): HasMany
     {
         return $this->hasMany(Invoice::class, 'buyer_id');
+    }
+
+    /**
+     * @return HasMany<Certificate, $this>
+     */
+    public function certificates(): HasMany
+    {
+        return $this->hasMany(Certificate::class);
+    }
+
+    /**
+     * The single signing certificate currently in force (single-active invariant).
+     *
+     * @return HasOne<Certificate, $this>
+     */
+    public function activeCertificate(): HasOne
+    {
+        return $this->hasOne(Certificate::class)
+            ->where('status', CertificateStatus::Active)
+            ->latestOfMany();
     }
 }

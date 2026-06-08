@@ -10,10 +10,14 @@ use Tests\Fixtures\InvoiceFixture;
 
 function buildSignedInboundXml(): string
 {
+    bootTestPki();
     $invoice = InvoiceFixture::outbound();
-    $signed = resolve(InvoiceSigner::class)->execute(resolve(UblGenerator::class)->execute($invoice));
+    $credential = issueTestCertificate($invoice->supplier)->toSigningCredential();
+    $signed = resolve(InvoiceSigner::class)->execute(resolve(UblGenerator::class)->execute($invoice), $credential);
     $xml = $signed->saveXML();
 
+    // Drop the local supplier so the inbound flow must auto-create it; the
+    // signature still verifies because the embedded cert chains to the test CA.
     Invoice::query()->delete();
     Party::where('oib', $invoice->supplier->oib)->delete();
 

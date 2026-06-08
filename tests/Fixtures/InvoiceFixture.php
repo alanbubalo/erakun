@@ -2,12 +2,15 @@
 
 namespace Tests\Fixtures;
 
+use App\Actions\IssuePartyCertificate;
 use App\Enums\InvoiceDirection;
 use App\Enums\InvoiceStatus;
 use App\Enums\VatCategory;
 use App\Models\Invoice;
 use App\Models\InvoiceLine;
 use App\Models\Party;
+use App\Pki\TestPkiGenerator;
+use Illuminate\Support\Facades\Storage;
 
 class InvoiceFixture
 {
@@ -59,6 +62,23 @@ class InvoiceFixture
             'kpd_code' => '622020',
         ]);
 
+        // Outbound flows sign with the parties' certificates, so the fixture must
+        // furnish both with one — issued off the test PKI.
+        self::provisionSigningCertificates($supplier, $buyer);
+
         return $invoice->load('supplier', 'buyer', 'lines');
+    }
+
+    private static function provisionSigningCertificates(Party ...$parties): void
+    {
+        if (! Storage::disk((string) config('pki.disk'))->exists(TestPkiGenerator::FINA_CA_CERT)) {
+            resolve(TestPkiGenerator::class)->generate();
+        }
+
+        foreach ($parties as $party) {
+            if ($party->activeCertificate()->doesntExist()) {
+                resolve(IssuePartyCertificate::class)->execute($party);
+            }
+        }
     }
 }

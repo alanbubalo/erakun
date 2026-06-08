@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Actions\InvoiceSigner;
 use App\As4\As4EnvelopeBuilder;
+use App\As4\As4EnvelopeSigner;
 use App\Enums\As4MessageDirection;
 use App\Enums\As4MessageState;
 use App\Enums\InvoiceDirection;
@@ -11,6 +12,9 @@ use App\Enums\InvoiceStatus;
 use App\Models\As4Message;
 use App\Models\Invoice;
 use App\Models\Party;
+use App\Pki\TestPkiGenerator;
+
+beforeEach(fn () => bootTestPki());
 
 function ublFixtureFor5c(string $name = 'valid-hr-cius.xml'): string
 {
@@ -23,21 +27,25 @@ function ublFixtureFor5c(string $name = 'valid-hr-cius.xml'): string
 
 function buildAs4Envelope(string $ublXml, string $messageId, bool $signed = true): string
 {
+    // Document layer: sign the inner UBL with the supplier's (FINA-like) cert.
+    $ublDom = new DOMDocument;
+    $ublDom->loadXML($ublXml);
+    $supplierCredential = resolve(TestPkiGenerator::class)->issuePartyCertificate('22222222226', 'TVRTKA A d.o.o.');
+    $signedUbl = (string) resolve(InvoiceSigner::class)->execute($ublDom, $supplierCredential)->saveXML();
+
     $dom = (new As4EnvelopeBuilder)->build(
-        ublXml: $ublXml,
+        ublXml: $signedUbl,
         messageId: $messageId,
         senderOib: '22222222226',
         recipientOib: '11111111119',
     );
 
     if ($signed) {
-        $dom = (new InvoiceSigner)->execute($dom);
+        // Transport layer: WS-Security signature with the access point (OpenPEPPOL-like) cert.
+        $dom = resolve(As4EnvelopeSigner::class)->execute($dom);
     }
 
-    $xml = $dom->saveXML();
-    expect($xml)->toBeString();
-
-    return (string) $xml;
+    return (string) $dom->saveXML();
 }
 
 function postAs4Envelope(string $envelopeXml)

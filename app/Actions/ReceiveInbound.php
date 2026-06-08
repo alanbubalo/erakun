@@ -5,20 +5,25 @@ namespace App\Actions;
 use App\Enums\InvoiceDirection;
 use App\Enums\InvoiceStatus;
 use App\Exceptions\InvoiceValidationException;
+use App\Exceptions\SignatureVerificationException;
 use App\Models\Invoice;
 use App\Models\Party;
 use App\Validation\ValidationIssue;
 use App\Validation\ValidationReport;
+use DOMDocument;
 use Illuminate\Support\Facades\DB;
 
-final class ReceiveInbound
+final readonly class ReceiveInbound
 {
     public function __construct(
-        private readonly StoreInvoiceUbl $storeUbl,
+        private StoreInvoiceUbl $storeUbl,
+        private SignatureVerifier $signatureVerifier,
     ) {}
 
     public function execute(ParsedInvoice $parsed, string $rawXml): Invoice
     {
+        $this->assertSignatureValid($rawXml);
+
         return DB::transaction(function () use ($parsed, $rawXml) {
             $supplier = Party::firstOrCreate(
                 ['oib' => $parsed->supplier->oib],
@@ -86,5 +91,35 @@ final class ReceiveInbound
 
             return $invoice->load('supplier', 'buyer', 'lines');
         });
+    }
+
+    /**
+     * An inbound document must carry a verifiable signature: real digest match
+     * (no tampering) from a certificate that chains to a trusted CA. A failure
+     * surfaces as a validation error, so the direct endpoint returns 422 and the
+     * AS4 path maps it to EBMS:0004.
+     */
+    private function assertSignatureValid(string $rawXml): void
+    {
+        $dom = new DOMDocument;
+
+        $failure = static fn (string $message): InvoiceValidationException => new InvoiceValidationException(new ValidationReport([
+            new ValidationIssue(
+                source: 'signature',
+                rule: 'signature-verification',
+                severity: 'error',
+                message: $message,
+            ),
+        ]));
+
+        if (! $dom->loadXML($rawXml)) {
+            throw $failure('Inbound document is not well-formed XML.');
+        }
+
+        try {
+            $this->signatureVerifier->verify($dom);
+        } catch (SignatureVerificationException $e) {
+            throw $failure($e->getMessage());
+        }
     }
 }

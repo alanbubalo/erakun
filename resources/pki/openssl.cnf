@@ -1,0 +1,25 @@
+# OpenSSL configuration for eRakun's *test* PKI.
+#
+# Used by App\Pki\TestPkiGenerator to mint the two fictional root CAs (standing
+# in for FINA and OpenPEPPOL) and the end-entity certificates they issue. Only
+# the trust anchors are fictional — the keys, signatures and X.509 extensions
+# below are real. Never used for production trust material.
+
+[ req ]
+distinguished_name = req_dn
+prompt             = no
+
+[ req_dn ]
+
+# Root CA: may sign other certificates.
+[ v3_ca ]
+basicConstraints     = critical, CA:TRUE
+keyUsage             = critical, keyCertSign, cRLSign
+subjectKeyIdentifier = hash
+
+# End-entity (party signing cert / access point cert): may not sign certs.
+# nonRepudiation matches the intent of a qualified document-signing certificate.
+[ v3_leaf ]
+basicConstraints     = critical, CA:FALSE
+keyUsage             = critical, digitalSignature, nonRepudiation
+subjectKeyIdentifier = hash

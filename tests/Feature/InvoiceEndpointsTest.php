@@ -309,6 +309,7 @@ it('returns 404 for unknown invoice', function (): void {
 
 it('transitions queued to sent', function (): void {
     $invoice = Invoice::factory()->create(['status' => InvoiceStatus::Queued]);
+    provisionInvoiceCertificates($invoice);
 
     $response = $this->patchJson("/api/invoices/{$invoice->id}/status", [
         'status' => 'sent',
@@ -320,6 +321,7 @@ it('transitions queued to sent', function (): void {
 
 it('transitions sent to delivered', function (): void {
     $invoice = Invoice::factory()->create(['status' => InvoiceStatus::Sent]);
+    provisionInvoiceCertificates($invoice);
 
     $response = $this->patchJson("/api/invoices/{$invoice->id}/status", [
         'status' => 'delivered',
@@ -342,6 +344,7 @@ it('transitions sent to rejected', function (): void {
 
 it('transitions received to delivered', function (): void {
     $invoice = Invoice::factory()->received()->create();
+    provisionInvoiceCertificates($invoice);
 
     $response = $this->patchJson("/api/invoices/{$invoice->id}/status", [
         'status' => 'delivered',

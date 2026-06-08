@@ -11,6 +11,7 @@ use App\Fiscalization\FiscalizationService;
 use App\Fiscalization\FiscalizationServiceException;
 use App\Models\FiscalMessage;
 use App\Models\Invoice;
+use App\Pki\PartySigningCredentials;
 use RuntimeException;
 
 class SubmitFiscalization
@@ -19,6 +20,7 @@ class SubmitFiscalization
         private readonly FiscalMessageBuilder $builder,
         private readonly InvoiceSigner $signer,
         private readonly FiscalizationService $fiscalization,
+        private readonly PartySigningCredentials $signingCredentials,
     ) {}
 
     public function execute(Invoice $invoice, string $reporterOib): FiscalMessage
@@ -30,7 +32,7 @@ class SubmitFiscalization
         }
 
         $dom = $this->builder->build($invoice, $reporterOib);
-        $signed = $this->signer->execute($dom);
+        $signed = $this->signer->execute($dom, $this->signingCredentials->forOib($reporterOib));
         $xml = $signed->saveXML();
 
         throw_if($xml === false, RuntimeException::class, 'Failed to serialize signed fiscal message.');
