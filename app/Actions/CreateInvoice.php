@@ -43,19 +43,22 @@ class CreateInvoice
 
             $totalAmount = bcadd($netAmount, $taxAmount, 2);
 
-            $invoice = Invoice::create([
+            $invoice = new Invoice([
                 'supplier_id' => $supplier->id,
                 'buyer_id' => $buyer->id,
                 'invoice_number' => $data['invoice_number'],
                 'issue_date' => $data['issue_date'],
                 'due_date' => $data['due_date'] ?? null,
                 'direction' => $data['direction'],
-                'status' => InvoiceStatus::Draft,
                 'currency' => $data['currency'] ?? 'EUR',
                 'net_amount' => $netAmount,
                 'tax_amount' => $taxAmount,
                 'total_amount' => $totalAmount,
             ]);
+
+            // status is intentionally not mass-assignable; Draft is the birth state.
+            $invoice->status = InvoiceStatus::Draft;
+            $invoice->save();
 
             foreach ($lines as $line) {
                 $invoice->lines()->create($line);

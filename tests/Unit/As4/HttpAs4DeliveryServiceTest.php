@@ -13,11 +13,13 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 
+beforeEach(fn () => bootTestPki());
+
 function makeAs4Service(?PeerEndpointResolver $peers = null): HttpAs4DeliveryService
 {
     return new HttpAs4DeliveryService(
         builder: new As4EnvelopeBuilder,
-        signer: new As4EnvelopeSigner,
+        signer: resolve(As4EnvelopeSigner::class),
         peers: $peers ?? new ConfigPeerEndpointResolver(
             map: ['98765432109' => 'http://peer.test'],
             defaultPeerUrl: 'http://default.test',

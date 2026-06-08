@@ -22,6 +22,8 @@
                 maxOccurs="1"/>
       </xs:sequence>
       <xs:attribute name="id" type="xs:string" use="required"/>
+      <!-- Permits the WS-Security wsu:Id the signature references the payload by. -->
+      <xs:anyAttribute namespace="##other" processContents="skip"/>
     </xs:complexType>
   </xs:element>
 

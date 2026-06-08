@@ -16,7 +16,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.5'
           extensions: mbstring, sqlite3
           coverage: none
 
@@ -28,12 +28,6 @@ jobs:
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
-
-      - name: Check formatting
-        run: ./vendor/bin/pint --test
-
-      - name: Run static analysis
-        run: ./vendor/bin/phpstan analyse
 
       - name: Cache Saxon-HE jars
         id: cache-saxon
@@ -57,5 +51,5 @@ jobs:
         if: steps.cache-compiled.outputs.cache-hit != 'true'
         run: php artisan schema:compile
 
-      - name: Run tests
-        run: ./vendor/bin/pest
+      - name: Run checks (lint, refactor, analyse, test)
+        run: composer check

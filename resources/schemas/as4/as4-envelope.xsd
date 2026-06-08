@@ -35,8 +35,9 @@
   <xs:complexType name="HeaderType">
     <xs:sequence>
       <xs:element ref="eb:Messaging"/>
-      <!-- Envelope-level signature: shape only, not crypto-verified at this layer. -->
-      <xs:any namespace="http://www.w3.org/2000/09/xmldsig#"
+      <!-- WS-Security header (wsse:Security wrapping ds:Signature). Shape only here;
+           the signature is crypto-verified by SignatureVerifier on the receive side. -->
+      <xs:any namespace="##other"
               processContents="skip"
               minOccurs="0"
               maxOccurs="unbounded"/>

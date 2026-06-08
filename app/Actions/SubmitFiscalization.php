@@ -11,6 +11,7 @@ use App\Fiscalization\FiscalizationService;
 use App\Fiscalization\FiscalizationServiceException;
 use App\Models\FiscalMessage;
 use App\Models\Invoice;
+use App\Pki\PartySigningCredentials;
 use RuntimeException;
 
 class SubmitFiscalization
@@ -19,18 +20,19 @@ class SubmitFiscalization
         private readonly FiscalMessageBuilder $builder,
         private readonly InvoiceSigner $signer,
         private readonly FiscalizationService $fiscalization,
+        private readonly PartySigningCredentials $signingCredentials,
     ) {}
 
-    public function execute(Invoice $invoice, string $reporterOib): FiscalMessage
+    public function execute(Invoice $invoice, string $reporterOib): SubmissionResult
     {
         $existing = $invoice->latestFiscalMessageFor($reporterOib);
 
         if ($existing instanceof FiscalMessage && $existing->state === FiscalMessageState::Accepted) {
-            return $existing;
+            return new SubmissionResult(SubmissionOutcome::AlreadyTerminal, $existing);
         }
 
         $dom = $this->builder->build($invoice, $reporterOib);
-        $signed = $this->signer->execute($dom);
+        $signed = $this->signer->execute($dom, $this->signingCredentials->forOib($reporterOib));
         $xml = $signed->saveXML();
 
         throw_if($xml === false, RuntimeException::class, 'Failed to serialize signed fiscal message.');
@@ -59,7 +61,7 @@ class SubmitFiscalization
             'settled_at' => now(),
         ]);
 
-        return $message->refresh();
+        return new SubmissionResult(SubmissionOutcome::Submitted, $message->refresh());
     }
 
     private function upsertRequested(

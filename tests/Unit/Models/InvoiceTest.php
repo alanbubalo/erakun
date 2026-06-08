@@ -3,6 +3,7 @@
 use App\Enums\InvoiceDirection;
 use App\Enums\InvoiceStatus;
 use App\Enums\VatCategory;
+use App\Exceptions\InvalidInvoiceTransitionException;
 use App\Models\Invoice;
 use App\Models\InvoiceLine;
 use App\Models\Party;
@@ -36,6 +37,31 @@ it('casts status to InvoiceStatus enum', function (): void {
 
     expect($fresh->status)->toBe(InvoiceStatus::Draft)
         ->and($fresh->status)->toBeInstanceOf(InvoiceStatus::class);
+});
+
+it('transitions to a legal target status', function (): void {
+    $invoice = Invoice::factory()->draft()->create();
+
+    $invoice->transitionTo(InvoiceStatus::Queued);
+
+    expect($invoice->fresh()->status)->toBe(InvoiceStatus::Queued);
+});
+
+it('rejects an illegal target status and leaves the invoice unchanged', function (): void {
+    $invoice = Invoice::factory()->delivered()->create();
+
+    expect(fn () => $invoice->transitionTo(InvoiceStatus::Queued))
+        ->toThrow(InvalidInvoiceTransitionException::class);
+
+    expect($invoice->fresh()->status)->toBe(InvoiceStatus::Delivered);
+});
+
+it('does not change status through mass assignment', function (): void {
+    $invoice = Invoice::factory()->draft()->create();
+
+    $invoice->update(['status' => InvoiceStatus::Delivered]);
+
+    expect($invoice->fresh()->status)->toBe(InvoiceStatus::Draft);
 });
 
 it('casts direction to InvoiceDirection enum', function (): void {

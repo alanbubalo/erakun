@@ -12,8 +12,9 @@ it('generates UBL XML matching the canonical snapshot', function (): void {
 });
 
 it('produces XML that passes UBL/EN 16931/HR-CIUS validation', function (): void {
-    $dom = resolve(UblGenerator::class)->execute(InvoiceFixture::outbound());
-    $signed = resolve(InvoiceSigner::class)->execute($dom);
+    $invoice = InvoiceFixture::outbound();
+    $dom = resolve(UblGenerator::class)->execute($invoice);
+    $signed = resolve(InvoiceSigner::class)->execute($dom, testSigningCredential($invoice->supplier));
 
     $report = resolve(UblValidator::class)->validate($signed->saveXML());
 

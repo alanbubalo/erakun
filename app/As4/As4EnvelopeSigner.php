@@ -4,104 +4,62 @@ declare(strict_types=1);
 
 namespace App\As4;
 
+use App\Pki\AccessPointCredential;
 use DOMDocument;
 use DOMElement;
 use RobRichards\XMLSecLibs\XMLSecurityDSig;
+use RobRichards\XMLSecLibs\XMLSecurityKey;
 use RuntimeException;
 
 /**
- * Adds the sending access point's transport-level signature to an AS4 envelope.
+ * Signs an AS4 envelope at the transport layer with the access point's own
+ * certificate, the way WS-Security does: a real RSA-SHA256 ds:Signature inside a
+ * wsse:Security header, referencing the payload by its wsu:Id over exclusive C14N.
  *
- * This is distinct from the invoice signature: the supplier's qualified
- * signature is enveloped inside the UBL payload (see {@see InvoiceSigner}),
- * while this signs the *message* by placing a <ds:Signature> in the SOAP header,
- * the way WS-Security does. Keeping the two separate prevents the delivery step
- * from re-signing an already-signed UBL (which produced a second <ds:Signature>
- * inside sac:SignatureInformation and failed the receiver's schema validation).
- *
- * Crypto-light, like the rest of the mock: the digest is real (C14N + SHA-256
- * over the payload) but the SignatureValue and certificate are stubs.
+ * This is distinct from the supplier's XAdES signature enveloped inside the UBL
+ * payload (see {@see InvoiceSigner}). Keeping the two layers
+ * separate mirrors the PEPPOL split between the AP (OpenPEPPOL-issued) and the
+ * party (FINA-issued) certificates.
  */
-final class As4EnvelopeSigner
+final readonly class As4EnvelopeSigner
 {
-    private const string NS_DS = 'http://www.w3.org/2000/09/xmldsig#';
+    public const string NS_WSSE = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd';
 
-    private const string STUB_SIGNATURE_VALUE = 'STUB-AS4';
-
-    private const string STUB_CERT_SERIAL = '00000000000000000002';
-
-    private const string STUB_CERT_ISSUER = 'CN=eRakun AS4 Stub Access Point, O=eRakun, C=HR';
+    public function __construct(private AccessPointCredential $credential) {}
 
     public function execute(DOMDocument $envelope): DOMDocument
     {
-        $header = $envelope->getElementsByTagNameNS(As4EnvelopeBuilder::NS_SOAP, 'Header')->item(0);
+        // Emit verbatim: pretty-printing would inject whitespace the digests —
+        // both this transport signature and the enveloped UBL one inside the
+        // payload — never saw, breaking verification on the receive side.
+        $envelope->formatOutput = false;
 
+        $header = $envelope->getElementsByTagNameNS(As4EnvelopeBuilder::NS_SOAP, 'Header')->item(0);
         throw_unless($header instanceof DOMElement, RuntimeException::class, 'AS4 envelope is missing a soap:Header to sign.');
 
-        $digest = $this->digestPayload($envelope);
-        $header->appendChild($this->buildSignature($envelope, $digest));
+        $payload = $envelope->getElementsByTagNameNS(As4EnvelopeBuilder::NS_AS4, 'UblPayload')->item(0);
+        throw_unless($payload instanceof DOMElement, RuntimeException::class, 'AS4 envelope is missing an as4:UblPayload to sign.');
+
+        $credential = $this->credential->resolve();
+
+        $dsig = new XMLSecurityDSig;
+        $dsig->setCanonicalMethod(XMLSecurityDSig::EXC_C14N);
+        $dsig->addReference(
+            $payload,
+            XMLSecurityDSig::SHA256,
+            [XMLSecurityDSig::EXC_C14N],
+            ['overwrite' => false, 'id_name' => 'Id', 'prefix' => 'wsu', 'prefix_ns' => As4EnvelopeBuilder::NS_WSU],
+        );
+
+        $key = new XMLSecurityKey(XMLSecurityKey::RSA_SHA256, ['type' => 'private']);
+        $key->loadKey($credential->privateKeyPem, false);
+        $dsig->sign($key);
+        $dsig->add509Cert($credential->certificatePem, true);
+
+        $security = $envelope->createElementNS(self::NS_WSSE, 'wsse:Security');
+        $header->appendChild($security);
+        $dsig->appendSignature($security);
 
         return $envelope;
-    }
-
-    private function digestPayload(DOMDocument $envelope): string
-    {
-        $payload = $envelope->getElementsByTagNameNS(As4EnvelopeBuilder::NS_AS4, 'UblPayload')->item(0);
-        $node = $payload instanceof DOMElement ? $payload : $envelope->documentElement;
-
-        $canonical = $node?->C14N(exclusive: false, withComments: false);
-
-        throw_if($canonical === null || $canonical === false, RuntimeException::class, 'Failed to canonicalize AS4 payload for digest.');
-
-        return base64_encode(hash('sha256', $canonical, binary: true));
-    }
-
-    private function buildSignature(DOMDocument $dom, string $digestValue): DOMElement
-    {
-        $signature = $dom->createElementNS(self::NS_DS, 'ds:Signature');
-        $signature->setAttribute('Id', 'erakun-as4-signature');
-
-        $signedInfo = $dom->createElementNS(self::NS_DS, 'ds:SignedInfo');
-        $this->appendDs($dom, $signedInfo, 'CanonicalizationMethod', ['Algorithm' => XMLSecurityDSig::C14N]);
-        $this->appendDs($dom, $signedInfo, 'SignatureMethod', ['Algorithm' => 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256']);
-
-        $reference = $dom->createElementNS(self::NS_DS, 'ds:Reference');
-        $reference->setAttribute('URI', '#'.As4EnvelopeBuilder::PAYLOAD_ID);
-        $this->appendDs($dom, $reference, 'DigestMethod', ['Algorithm' => XMLSecurityDSig::SHA256]);
-        $this->appendDs($dom, $reference, 'DigestValue', [], $digestValue);
-        $signedInfo->appendChild($reference);
-
-        $signature->appendChild($signedInfo);
-
-        $this->appendDs($dom, $signature, 'SignatureValue', [], base64_encode(self::STUB_SIGNATURE_VALUE));
-
-        $keyInfo = $dom->createElementNS(self::NS_DS, 'ds:KeyInfo');
-        $x509Data = $dom->createElementNS(self::NS_DS, 'ds:X509Data');
-        $serial = $dom->createElementNS(self::NS_DS, 'ds:X509IssuerSerial');
-        $this->appendDs($dom, $serial, 'X509IssuerName', [], self::STUB_CERT_ISSUER);
-        $this->appendDs($dom, $serial, 'X509SerialNumber', [], self::STUB_CERT_SERIAL);
-        $x509Data->appendChild($serial);
-        $keyInfo->appendChild($x509Data);
-        $signature->appendChild($keyInfo);
-
-        return $signature;
-    }
-
-    /**
-     * @param  array<string, string>  $attributes
-     */
-    private function appendDs(DOMDocument $dom, DOMElement $parent, string $name, array $attributes = [], string $value = ''): DOMElement
-    {
-        $el = $value === ''
-            ? $dom->createElementNS(self::NS_DS, 'ds:'.$name)
-            : $dom->createElementNS(self::NS_DS, 'ds:'.$name, $value);
-
-        foreach ($attributes as $attr => $val) {
-            $el->setAttribute($attr, $val);
-        }
-
-        $parent->appendChild($el);
-
-        return $el;
     }
 }

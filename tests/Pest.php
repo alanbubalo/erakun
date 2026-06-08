@@ -2,15 +2,25 @@
 
 declare(strict_types=1);
 
+use App\Actions\IssuePartyCertificate;
+use App\Models\Certificate;
+use App\Models\Invoice;
+use App\Models\Party;
+use App\Pki\PartySigningCredentials;
+use App\Pki\SigningCredential;
+use App\Pki\TestPkiGenerator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class)->in('Feature', 'Unit', 'Integration');
 
-// UBL documents live on the filesystem disk (only a path is persisted in the DB).
-// Fake the default disk per test so the persistence pipeline never touches real storage.
-uses()->beforeEach(fn () => Storage::fake())->in('Feature', 'Unit', 'Integration');
+// UBL documents and PKI material live on filesystem disks (only paths/metadata are
+// persisted in the DB). Fake both per test so the pipeline never touches real storage.
+uses()->beforeEach(function (): void {
+    Storage::fake();
+    Storage::fake('pki');
+})->in('Feature', 'Unit', 'Integration');
 
 function fiscAcceptedEnvelope(string $messageId = 'FIS-2026-000042', string $matchStatus = 'pending'): string
 {
@@ -134,4 +144,40 @@ function as4ErrorEnvelope(
           <soap:Body/>
         </soap:Envelope>
         XML;
+}
+
+/**
+ * Fake the PKI disk and mint the test hierarchy (root CAs + access point cert).
+ * Call in beforeEach for any test that signs or verifies real signatures.
+ */
+function bootTestPki(): void
+{
+    Storage::fake('pki');
+    resolve(TestPkiGenerator::class)->generate();
+}
+
+/** Issue + register an active signing certificate for a party (requires bootTestPki). */
+function issueTestCertificate(Party $party): Certificate
+{
+    return resolve(IssuePartyCertificate::class)->execute($party);
+}
+
+/** Resolve a party's active signing credential (requires an issued certificate). */
+function testSigningCredential(Party $party): SigningCredential
+{
+    return resolve(PartySigningCredentials::class)->for($party);
+}
+
+/** Ensure both of an invoice's parties hold an active signing certificate (boots PKI if needed). */
+function provisionInvoiceCertificates(Invoice $invoice): void
+{
+    if (! Storage::disk((string) config('pki.disk'))->exists(TestPkiGenerator::FINA_CA_CERT)) {
+        resolve(TestPkiGenerator::class)->generate();
+    }
+
+    foreach ([$invoice->supplier, $invoice->buyer] as $party) {
+        if ($party !== null && $party->activeCertificate()->doesntExist()) {
+            issueTestCertificate($party);
+        }
+    }
 }

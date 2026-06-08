@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\As4InboxController;
+use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\InboundInvoiceController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceDeliveryController;
@@ -19,6 +20,15 @@ Route::get('/', fn () => response()->json([
 
 Route::post('/parties', [PartyController::class, 'store']);
 Route::get('/parties/{party}', [PartyController::class, 'show']);
+
+// Party signing certificates (document-layer credentials). Scoped bindings tie
+// {certificate} to its parent {party}.
+Route::scopeBindings()->group(function (): void {
+    Route::get('/parties/{party}/certificates', [CertificateController::class, 'index']);
+    Route::post('/parties/{party}/certificates', [CertificateController::class, 'store']);
+    Route::get('/parties/{party}/certificates/{certificate}', [CertificateController::class, 'show']);
+    Route::delete('/parties/{party}/certificates/{certificate}', [CertificateController::class, 'destroy']);
+});
 
 Route::post('/invoices', [InvoiceController::class, 'store']);
 Route::post('/invoices/inbound', [InboundInvoiceController::class, 'store']);

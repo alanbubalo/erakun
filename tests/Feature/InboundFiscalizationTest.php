@@ -17,15 +17,27 @@ use Tests\Doubles\InMemoryFiscalizationService;
 use Tests\Fixtures\InvoiceFixture;
 
 beforeEach(function (): void {
+    bootTestPki();
     config(['services.fiscalization.url' => 'http://cis.test']);
     $this->app->forgetInstance(FiscalizationService::class);
 });
 
+/** Ensure both parties on an invoice hold an active signing certificate. */
+function ensureCerts(Invoice $invoice): void
+{
+    foreach ([$invoice->supplier, $invoice->buyer] as $party) {
+        if ($party->activeCertificate()->doesntExist()) {
+            issueTestCertificate($party);
+        }
+    }
+}
+
 /** Generate signed UBL from an in-memory Invoice (which may be tampered). */
 function signedUblFor(Invoice $invoice): string
 {
+    ensureCerts($invoice);
     $dom = resolve(UblGenerator::class)->execute($invoice);
-    $signed = resolve(InvoiceSigner::class)->execute($dom);
+    $signed = resolve(InvoiceSigner::class)->execute($dom, testSigningCredential($invoice->supplier));
 
     return $signed->saveXML();
 }
@@ -34,6 +46,7 @@ function signedUblFor(Invoice $invoice): string
 function fiscalizedOutbound(): Invoice
 {
     $invoice = InvoiceFixture::outbound();
+    ensureCerts($invoice);
     test()->patchJson("/api/invoices/{$invoice->id}/status", ['status' => 'queued'])->assertOk();
     test()->patchJson("/api/invoices/{$invoice->id}/status", ['status' => 'sent'])->assertOk();
 
