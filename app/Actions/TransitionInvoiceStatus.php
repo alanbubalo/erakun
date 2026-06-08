@@ -6,23 +6,16 @@ use App\Enums\InvoiceDirection;
 use App\Enums\InvoiceStatus;
 use App\Exceptions\As4DeliveryFailedException;
 use App\Exceptions\FiscalizationException;
-use App\Exceptions\InvoiceValidationException;
 use App\Models\Invoice;
-use App\Pki\PartySigningCredentials;
-use App\Validation\UblValidator;
 use Illuminate\Validation\ValidationException;
-use RuntimeException;
 
 class TransitionInvoiceStatus
 {
     public function __construct(
-        private readonly UblGenerator $generator,
-        private readonly InvoiceSigner $signer,
-        private readonly UblValidator $validator,
+        private readonly UblDocumentRenderer $renderer,
         private readonly SubmitAs4Delivery $submitAs4Delivery,
         private readonly SubmitFiscalization $submitFiscalization,
         private readonly StoreInvoiceUbl $storeUbl,
-        private readonly PartySigningCredentials $signingCredentials,
     ) {}
 
     public function execute(Invoice $invoice, InvoiceStatus $target): Invoice
@@ -33,10 +26,10 @@ class TransitionInvoiceStatus
             ]);
         }
 
-        // Generate (and validate) before mutating status so an invalid document
-        // leaves the invoice in its current state — generateSignedXml throws.
+        // Render (and validate) before mutating status so an invalid document
+        // leaves the invoice in its current state — renderer->signed() throws.
         $signedXml = $this->shouldGenerateUbl($invoice, $target)
-            ? $this->generateSignedXml($invoice)
+            ? $this->renderer->signed($invoice)
             : null;
 
         $invoice->update(['status' => $target]);
@@ -86,21 +79,5 @@ class TransitionInvoiceStatus
     {
         return $target === InvoiceStatus::Queued
             && $invoice->direction === InvoiceDirection::Outbound;
-    }
-
-    private function generateSignedXml(Invoice $invoice): string
-    {
-        $invoice->load('supplier', 'buyer', 'lines');
-
-        $dom = $this->generator->execute($invoice);
-        $signed = $this->signer->execute($dom, $this->signingCredentials->for($invoice->supplier));
-        $xml = $signed->saveXML();
-
-        throw_if($xml === false, RuntimeException::class, 'Failed to serialize signed UBL document.');
-
-        $report = $this->validator->validate($xml);
-        throw_unless($report->isValid(), InvoiceValidationException::class, $report);
-
-        return $xml;
     }
 }
