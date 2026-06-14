@@ -1,0 +1,19 @@
+meta {
+  name: List Certificates
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/parties/{{supplier_oib}}/certificates
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Popis certifikata subjekta, najnoviji prvi.
+}

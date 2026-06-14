@@ -1,0 +1,19 @@
+meta {
+  name: Get Certificate
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/parties/{{supplier_oib}}/certificates/{{certificate_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Detalji jednog certifikata. Vezanje je scoped — `{certificate}` mora pripadati `{party}`.
+}

@@ -1,0 +1,38 @@
+meta {
+  name: Update Invoice Status
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{base_url}}/invoices/{{invoice_id}}/status
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "status": "queued"
+  }
+}
+
+docs {
+  Ručni prijelaz statusa. Dozvoljeni su samo prijelazi iz tablice stanja:
+  - `draft -> queued`
+  - `queued -> sent`
+  - `sent -> delivered | rejected`
+  - `received -> delivered | rejected`
+  - `delivered`, `rejected` su završni (bez prijelaza)
+
+  Nedozvoljen prijelaz vraća grešku.
+
+  Prijelaz `draft -> queued` (samo za `outbound`) je onaj koji **generira i
+  potpisuje UBL** te ga sprema na račun — tek nakon toga *Get Invoice XML* vraća
+  potpisani dokument, a *Deliver* ima što slati. Ako stavka nosi KPD kod izvan
+  CPA liste, ovdje dobiješ `422` (EN 16931 / HR-BR-25), a status ostaje `draft`.
+  Prijelaz u `sent` automatski pokreće i dostavu i fiskalizaciju.
+}

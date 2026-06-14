@@ -1,0 +1,38 @@
+meta {
+  name: Create Party - Supplier
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/parties
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "oib": "{{supplier_oib}}",
+    "name": "TVRTKA A d.o.o.",
+    "is_vat_registered": true,
+    "address_line": "Ulica 1",
+    "city": "ZAGREB",
+    "postcode": "10000",
+    "country_code": "HR",
+    "iban": "HR1723600001101234565"
+  }
+}
+
+docs {
+  Registrira poslovni subjekt (dobavljača) kod posrednika.
+
+  - `oib` mora proći ISO 7064 MOD 11,10 kontrolu i biti jedinstven.
+  - `postcode` je točno 5 znamenki, `country_code` 2 slova (zadano `HR`).
+
+  Subjekt se u rutama adresira **po OIB-u** (ne po internom `id`), zato ostali
+  zahtjevi koriste `{{supplier_oib}}` / `{{buyer_oib}}` iz okoline.
+}

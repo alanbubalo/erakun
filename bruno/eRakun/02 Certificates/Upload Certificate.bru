@@ -1,0 +1,38 @@
+meta {
+  name: Upload Certificate
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/parties/{{supplier_oib}}/certificates
+  body: multipartForm
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:multipart-form {
+  certificate: @file()
+  password:
+}
+
+script:post-response {
+  if (res.getStatus() === 201) {
+    bru.setEnvVar("certificate_id", res.getBody().data.id);
+  }
+}
+
+docs {
+  Pohranjuje potpisni certifikat (dokumentacijski sloj) za subjekt.
+
+  Dva načina (jedan je obavezan):
+  - **Datoteka** — `certificate` kao PKCS#12 upload (`.p12`/`.pfx`), uz `password` ako je zaštićen.
+    U Bruno polju `certificate` klikni i odaberi datoteku (`@file(...)`).
+  - **PEM string** — umjesto datoteke pošalji JSON `{ "certificate_pem": "-----BEGIN CERTIFICATE----- ..." }`.
+
+  Mock ovaj certifikat veže uz subjekt i koristi ga pri potpisivanju izlaznog UBL-a.
+  Na uspjeh (201) sprema `data.id` u `certificate_id`.
+}

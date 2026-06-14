@@ -1,0 +1,19 @@
+meta {
+  name: Get Invoice
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/invoices/{{invoice_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Detalji računa s dobavljačem, kupcem i stavkama te trenutnim statusom.
+}

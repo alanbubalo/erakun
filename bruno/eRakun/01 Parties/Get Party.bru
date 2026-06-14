@@ -1,0 +1,21 @@
+meta {
+  name: Get Party
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/parties/{{supplier_oib}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Dohvaća registrirani subjekt. Subjekt se adresira **po OIB-u**
+  (`getRouteKeyName() === 'oib'`), pa je u putanji `{{supplier_oib}}`,
+  a ne interni `id`.
+}

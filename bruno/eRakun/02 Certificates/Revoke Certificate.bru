@@ -1,0 +1,20 @@
+meta {
+  name: Revoke Certificate
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{base_url}}/parties/{{supplier_oib}}/certificates/{{certificate_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Opoziva certifikat (status -> `revoked`). Vraća 204 No Content.
+  Zapis ostaje radi povijesti; ne briše se fizički.
+}

@@ -1,0 +1,31 @@
+meta {
+  name: Deliver Invoice (AS4)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/invoices/{{invoice_id}}/deliver
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Dostavlja eRačun primateljevu posredniku preko AS4. Posrednik složi SOAP/AS4
+  poruku s potpisanim UBL-om i bilježi potvrdu (acknowledgement).
+
+  Preduvjeti:
+  - račun mora imati **potpisani UBL** — tj. prethodno prebačen u `queued`
+    (vidi Update Status). Bez `ubl_xml` endpoint je no-op i vrati `200` bez
+    promjene (ništa za slati).
+  - mora raditi **peer pristupna točka** (`AS4_DEFAULT_PEER_URL`, zadano
+    `http://localhost:8002`). Ako peer ne radi/odbije, vraća
+    `422 "AS4 peer rejected the delivery."`.
+
+  - 200: dostavljeno — zabilježena `acknowledged` AS4 poruka.
+  - 409: AS4 dostava je već potvrđena.
+}

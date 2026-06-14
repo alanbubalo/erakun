@@ -1,0 +1,23 @@
+meta {
+  name: MPS Participant Lookup
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/mps/participants/{{supplier_oib}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Metadata-servis (MPS): za zadani OIB vraća kako doseći sudionika
+  (AS4 endpoint), analogno PEPPOL SML/SMP otkrivanju.
+
+  - 200: sudionik je poznat (postoji u `parties`), vraća `oib` i `as4_endpoint`.
+  - 404: OIB nije registriran kod ovog posrednika.
+}

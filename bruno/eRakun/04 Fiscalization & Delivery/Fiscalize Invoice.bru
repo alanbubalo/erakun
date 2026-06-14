@@ -1,0 +1,23 @@
+meta {
+  name: Fiscalize Invoice
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/invoices/{{invoice_id}}/fiscalize
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Šalje fiskalni zapis računa u CIS (mock Porezne uprave) u ime obveznika.
+  Posrednik potpisuje poruku i bilježi ishod na računu.
+
+  - 200: prihvaćeno — vraća ažurirani račun.
+  - 409: fiskalni zapis je već u završnom (prihvaćenom) stanju.
+}

@@ -1,0 +1,27 @@
+meta {
+  name: API Welcome
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/
+  body: none
+  auth: none
+}
+
+docs {
+  # eRakun API
+
+  Ulazna točka. Vraća dobrodošlicu i potvrđuje da API radi.
+
+  Pokreni poslužitelj: `php artisan serve` (sluša na `http://localhost:8000`).
+  Odaberi okolinu **Local** (gore desno) prije slanja zahtjeva.
+
+  ## Preporučeni redoslijed (workflow)
+  1. **01 Parties** — kreiraj dobavljača i kupca
+  2. **02 Certificates** — izdaj potpisni certifikat dobavljaču
+  3. **03 Invoices** — kreiraj izlazni račun, dohvati ga i njegov UBL XML
+  4. **04 Fiscalization & Delivery** — fiskaliziraj pa dostavi (AS4)
+  5. **05 Inbound & Network** — zaprimanje dolaznog eRačuna i mrežne usluge
+}

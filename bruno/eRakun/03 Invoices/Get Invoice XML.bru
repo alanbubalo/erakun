@@ -1,0 +1,22 @@
+meta {
+  name: Get Invoice XML
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/invoices/{{invoice_id}}/xml
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/xml
+}
+
+docs {
+  Vraća UBL 2.1 / HR-CIUS prikaz računa (potpisani XAdES-B kad je dobavljač
+  opremljen certifikatom). Ovaj XML je ono što se šalje u CIS (fiskalizacija) i
+  drugom posredniku (AS4). Možeš ga kopirati u "Receive Inbound UBL" na drugoj
+  instanci za demonstraciju razmjene.
+}

@@ -1,0 +1,31 @@
+meta {
+  name: List Invoices
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/invoices?direction=outbound&status=draft
+  body: none
+  auth: none
+}
+
+params:query {
+  direction: outbound
+  status: draft
+  ~supplier_oib: {{supplier_oib}}
+  ~buyer_oib: {{buyer_oib}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Popis računa s opcionalnim filterima (svi `sometimes`):
+  - `status`: `draft|queued|sent|received|delivered|rejected`
+  - `direction`: `outbound|inbound`
+  - `supplier_oib` / `buyer_oib`: 11 znamenki
+
+  Filtri označeni s `~` su isključeni; uključi ih po potrebi.
+}

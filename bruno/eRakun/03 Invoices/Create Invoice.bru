@@ -1,0 +1,61 @@
+meta {
+  name: Create Invoice
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/invoices
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "supplier_oib": "{{supplier_oib}}",
+    "buyer_oib": "{{buyer_oib}}",
+    "invoice_number": "RN-2026-00042",
+    "issue_date": "2026-04-15",
+    "due_date": "2026-05-15",
+    "direction": "outbound",
+    "currency": "EUR",
+    "lines": [
+      {
+        "description": "Konzultantske usluge",
+        "quantity": 1,
+        "unit_price": 100.00,
+        "vat_rate": 25.00,
+        "vat_category": "S",
+        "unit_code": "H87",
+        "kpd_code": "622020"
+      }
+    ]
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) {
+    bru.setEnvVar("invoice_id", res.getBody().data.id);
+  }
+}
+
+docs {
+  Kreira račun iz strukturiranog JSON-a. Posrednik izračunava neto/PDV/ukupno iz stavki.
+
+  Ograničenja (validacija):
+  - `supplier_oib` i `buyer_oib` moraju postojati (`/parties`) i biti različiti; oba prolaze OIB kontrolu.
+  - `invoice_number` jedinstven po dobavljaču.
+  - `direction`: `outbound` ili `inbound`.
+  - `vat_category`: `S` (standard), `Z` (nulta stopa), `E` (oslobođeno).
+  - `kpd_code`: točno 6 znamenki **iz KPD (CPA) liste**. Zahtjev provjerava samo
+    duljinu (6 znamenki), ali HR-CIUS Schematron (pravilo HR-BR-25) odbija kod
+    koji nije u CPA listi — to puca tek pri prijelazu u `queued`. Provjerene
+    vrijednosti: `622020`, `960212`. `unit_code` je opcionalan (zadano `H87`).
+
+  Račun nastaje u statusu `draft`. Na uspjeh sprema `data.id` u `invoice_id`.
+  Potpisani UBL nastaje tek prijelazom `draft -> queued` (vidi Update Status).
+}

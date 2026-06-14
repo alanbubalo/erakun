@@ -1,0 +1,40 @@
+meta {
+  name: AS4 Inbox
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/as4/inbox
+  body: xml
+  auth: none
+}
+
+headers {
+  Content-Type: application/soap+xml; charset=utf-8
+  Accept: application/soap+xml
+}
+
+body:xml {
+  <?xml version="1.0" encoding="UTF-8"?>
+  <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+    <soap:Header/>
+    <soap:Body>
+      <!--
+        AS4 prijemna točka posrednika. Očekuje SOAP/AS4 (eb:Messaging) poruku
+        s potpisanim UBL-om kao prilogom. Vraća SOAP odgovor (Receipt ili Fault)
+        s Content-Type "application/soap+xml".
+
+        Za realnu poruku koristi onu koju generira "Deliver Invoice (AS4)"
+        odlazna strana (vidi tests/Integration/TwoInstanceRoundTripTest.php).
+      -->
+    </soap:Body>
+  </soap:Envelope>
+}
+
+docs {
+  Server-to-server endpoint: ovdje *drugi* posrednik isporučuje eRačun nama.
+  Odgovor je AS4 Receipt (SOAP). U normalnom radu ga ne zoveš ručno — poziva ga
+  suprotna strana kad ti šalje račun. Uključeno radi cjelovitosti sučelja i
+  demonstracije round-tripa između dvije lokalne instance.
+}
