@@ -25,6 +25,7 @@
 \usepackage{tikz}
 \usetikzlibrary{positioning,arrows.meta,shapes.geometric,calc}
 \usepackage[hidelinks]{hyperref}
+\usepackage{graphicx}
 
 % Vertikalna crta lijevo za blokove-napomene (markdown blockquote).
 \colorlet{quotebar}{gray!55}
@@ -36,6 +37,18 @@
 % Skraceni stupci za tablice.
 \newcolumntype{C}{>{\centering\arraybackslash}X}
 \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+% Mjesto za stvarni screenshot Bruno sučelja. Drži dokument prevodivim i prije
+% nego se umetnu prave slike: kad je slika spremna, zamijeni poziv
+% \screenshot{...} s \includegraphics u figure okruženju (vidi komentar nize).
+\newcommand{\screenshot}[1]{%
+  \begin{center}
+  \setlength{\fboxsep}{0pt}%
+  \fbox{\begin{minipage}[c][3.0cm][c]{0.86\textwidth}%
+    \centering\color{gray!85}\itshape [ screenshot: #1 ]\\[4pt]%
+    {\scriptsize\upshape zamijeniti s \texttt{\textbackslash includegraphics} stvarne snimke}%
+  \end{minipage}}%
+  \end{center}}
 
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0.6em}
@@ -58,16 +71,16 @@
 \section*{Sažetak}
 \addcontentsline{toc}{section}{Sažetak}
 
-\textbf{eRakun} je REST API aplikacija u Laravelu koja oponaša rad \textbf{informacijskog
-posrednika} (access pointa) u hrvatskoj \textbf{Fiskalizaciji 2.0}. Pokriva cijeli
-\textbf{4-corner} tijek razmjene eRačuna: prijem računa od ERP-a, generiranje i parsiranje
-\textbf{UBL 2.1 / HR-CIUS} dokumenata, \textbf{pravo digitalno potpisivanje i verifikaciju}
+eRakun je REST API aplikacija u Laravelu koja oponaša rad informacijskog
+posrednika (access pointa) u hrvatskoj Fiskalizaciji 2.0. Pokriva cijeli
+4-corner tijek razmjene eRačuna: prijem računa od ERP-a, generiranje i parsiranje
+UBL 2.1 / HR-CIUS dokumenata, pravo digitalno potpisivanje i verifikaciju
 na dva sloja (XAdES-B na dokumentu, WS-Security na transportu) s vlastitim testnim PKI-jem,
-\textbf{fiskalizaciju} prema mock CIS-u sa sravnjivanjem prijava te \textbf{AS4} razmjenu
+fiskalizaciju prema mock CIS-u sa sravnjivanjem prijava te AS4 razmjenu
 između dva posrednika s otkrivanjem primatelja preko AMS/MPS-a. Projekt je izrađen kao
-\textbf{edukacijska vježba}: vjerno oponaša arhitekturu, formate i tokove poruka
+edukacijska vježba: vjerno oponaša arhitekturu, formate i tokove poruka
 certificiranog posrednika, dok su vanjski sustavi (Porezna/CIS, drugi posrednik, nacionalni
-adresar) i korijeni povjerenja \textbf{simulirani}. Dokument opisuje domenski kontekst,
+adresar) i korijeni povjerenja simulirani. Dokument opisuje domenski kontekst,
 arhitekturu, use case-ove, model podataka, API i sigurnosni (PKI) sloj, sve izvedeno iz
 stvarnog koda.
 
@@ -79,48 +92,43 @@ stvarnog koda.
 
 \subsection{Što je eRakun}
 
-\textbf{eRakun} je aplikacija (REST API) napisana u \textbf{Laravelu (PHP)} koja oponaša rad
-\textbf{informacijskog posrednika} u sustavu hrvatske \textbf{Fiskalizacije 2.0}. Posrednik je
+eRakun je aplikacija (REST API) napisana u Laravelu (PHP) koja oponaša rad
+informacijskog posrednika u sustavu hrvatske Fiskalizacije 2.0. Posrednik je
 certificirani poslužitelj (\textit{access point}) koji stoji između poslovnih subjekata i
-Porezne uprave te omogućuje elektroničku razmjenu računa (\textbf{eRačuna}) i njihovo
+Porezne uprave te omogućuje elektroničku razmjenu računa (eRačuna) i njihovo
 prijavljivanje državi.
 
-Projekt je izrađen kao \textbf{edukacijska vježba}: cilj je razumjeti i implementirati
+Projekt je izrađen kao edukacijska vježba: cilj je razumjeti i implementirati
 stvarne tokove poruka, formate i protokole sustava eRačuna, a ne pustiti sustav u
-produkciju. Zato su sve vanjske strane oponašane (vidi 1.3).
+produkciju. Zato su sve vanjske strane oponašane (vidi \ref{sec:opseg}).
 
 \subsection{Kontekst — Fiskalizacija 2.0}
 
-Od \textbf{1. siječnja 2026.} hrvatski zakon o Fiskalizaciji 2.0 obvezuje sve obveznike
+Od 1. siječnja 2026. hrvatski zakon o Fiskalizaciji 2.0 obvezuje sve obveznike
 PDV-a na elektroničku razmjenu računa u B2B i B2G prometu. Umjesto izravne razmjene
-PDF-ova ili papira, računi se izmjenjuju kao \textbf{strukturirani XML dokumenti} kroz mrežu
-certificiranih posrednika, a paralelno se prijavljuju (\textbf{fiskaliziraju}) Poreznoj
+PDF-ova ili papira, računi se izmjenjuju kao strukturirani XML dokumenti kroz mrežu
+certificiranih posrednika, a paralelno se prijavljuju (fiskaliziraju) Poreznoj
 upravi. eRakun implementira upravo ulogu jednog takvog posrednika.
 
-\subsection{Opseg i ograničenja}
+\subsection{Opseg i ograničenja}\label{sec:opseg}
 
-Projekt implementira \textbf{funkcionalnu jezgru} posrednika:
+Projekt implementira funkcionalnu jezgru posrednika:
 
 \begin{itemize}[nosep]
   \item prijem računa od ERP sustava (REST API, „unutarnji rub”)
-  \item generiranje i parsiranje \textbf{UBL 2.1} dokumenata s hrvatskim ekstenzijama
-  \item \textbf{digitalno potpisivanje} i \textbf{verifikaciju} potpisa (pravi kriptografski potpis,
+  \item generiranje i parsiranje UBL 2.1 dokumenata s hrvatskim ekstenzijama
+  \item digitalno potpisivanje i verifikaciju potpisa (pravi kriptografski potpis,
         vlastiti testni PKI)
-  \item \textbf{fiskalizaciju} prema mock CIS-u (Porezna)
-  \item razmjenu računa s drugim posrednikom preko \textbf{AS4} protokola
-  \item \textbf{otkrivanje primatelja} (discovery) preko mock nacionalnog adresara (AMS/MPS)
+  \item fiskalizaciju prema mock CIS-u (Porezna)
+  \item razmjenu računa s drugim posrednikom preko AS4 protokola
+  \item otkrivanje primatelja (discovery) preko mock nacionalnog adresara (AMS/MPS)
 \end{itemize}
 
-Svjesno \textbf{nije} u opsegu (oponašano ili pojednostavljeno):
-
-\begin{itemize}[nosep]
-  \item prava Porezna uprava — zamijenjena companion aplikacijom \texttt{erakun-porezna} (mock CIS)
-  \item pravi certifikati FINA-e / OpenPEPPOL-a — zamijenjeni vlastitim \textbf{testnim PKI-jem}
-  \item puni set eReporting poruka (plaćanja, odbijanja) — implementirana je samo osnovna
-        fiskalizacija računa (\texttt{FiscalMessageType::Fis}), ostali tipovi su predviđeni ali
-        zakomentirani
-  \item autentikacija/autorizacija ERP klijenata, rate-limiting, multi-tenancy
-\end{itemize}
+Sve vanjske strane (Porezna/CIS, drugi posrednik, nacionalni adresar) i korijeni
+povjerenja oponašani su radi cjelovite demonstracije, dok domenski kod ostaje
+produkcijski. Potpuni popis svjesnih granica opsega — mock CIS, testni PKI, podskup
+eReportinga, izostanak autentikacije API-ja i drugo — naveden je na jednom mjestu u
+poglavlju \ref{sec:zakljucak} (Svjesna ograničenja).
 
 \subsection{Tehnološki stog}
 
@@ -138,6 +146,152 @@ Testiranje & Pest; statička analiza Larastan/PHPStan; Rector; Pint \\
 \end{tabularx}
 
 % =============================================================================
+\section{Motivacija}
+
+\subsection{Ciljano tržište}
+
+Zakon o fiskalizaciji uvodi Fiskalizaciju 2.0 kao obvezu od 1. siječnja 2026.
+Od tog datuma svi obveznici PDV-a u Hrvatskoj moraju izdavati i primati račune u
+B2B (poslovni subjekt $\rightarrow$ poslovni subjekt) i B2G (prema javnom sektoru)
+prometu isključivo kao strukturirane elektroničke račune (eRačune), uz istodobnu
+prijavu (fiskalizaciju) podataka Poreznoj upravi. Razmjena više nije izravna, nego se
+odvija kroz mrežu certificiranih informacijskih posrednika (access pointova).
+
+Ciljano tržište aplikacije ovog tipa stoga su informacijski posrednici i subjekti koji
+to žele postati: računovodstveni servisi, dobavljači ERP i fakturnih sustava te veći poslovni
+subjekti koji žele opsluživati sebe i svoje klijente. Krajnji korisnici (obveznici PDV-a)
+neizravno su tržište jer se na posrednika \emph{priključuju}, izravno ili kroz svoj ERP.
+
+\begin{leftbar}
+Ova motivacija opisuje stvarno tržište i vrijednost koju rješenje ovog tipa donosi; gdje
+je relevantno, istaknuto je što u eRakunu jest, a što je svjesno oponašano (\ref{sec:zakljucak}).
+\end{leftbar}
+
+\subsection{Dosadašnji proces i postojeća rješenja}
+
+\textbf{Dosadašnji proces (prije Fiskalizacije 2.0).} U B2B prometu račun se najčešće slao kao
+nestrukturirani dokument, papirom poštom ili kao PDF privitak u e-pošti. Primatelj
+bi podatke ručno prepisivao u svoj sustav (ili u boljem slučaju kroz OCR), uz česte
+pogreške, gubitak dokumenata, sporu obradu i otežanu reviziju. Prijava prometa državi
+odvijala se naknadno, kroz periodička izvješća (PDV obrasci), bez razmjene pojedinačnih
+računa u stvarnom vremenu. B2G promet već je dijelom bio digitaliziran (obvezni eRačun prema
+javnim naručiteljima preko servisa kao što je FINA-in), ali B2B je ostao pretežno ručan.
+
+\textbf{Postojeća i konkurentska rješenja.} Tržište posrednika nije prazno. Porezna uprava
+vodi službeni popis registriranih informacijskih posrednika. Glavne skupine igrača su:
+
+\begin{itemize}[nosep]
+  \item \textbf{FINA} (Financijska agencija) državna je agencija koja izdaje kvalificirane
+        certifikate i sama nudi servis eRačuna te ulogu posrednika, pa je de facto referentna točka.
+  \item \textbf{Komercijalni posrednici} (npr. Moj-eRačun i sl.) etablirane su platforme
+        za razmjenu eRačuna s velikom postojećom bazom korisnika.
+  \item \textbf{Dobavljači ERP / računovodstvenih sustava} certificiraju se kao posrednici
+        kako bi svojim klijentima ponudili razmjenu eRačuna „ugrađenu” u postojeći softver.
+\end{itemize}
+
+Zajedničko im je da se svi oslanjaju na iste standarde (UBL 2.1 / HR-CIUS, EN 16931,
+PEPPOL AS4, fiskalne poruke prema CIS-u). Diferencijacija je u integracijama, cijeni,
+korisničkom iskustvu i dodatnim uslugama (arhiviranje, analitika, povezivanje s plaćanjem), a
+ne u samom protokolu, što interoperabilnost čini obveznom, a ulaz tehnički zahtjevnim ali
+jasno specificiranim.
+
+\subsection{Predispozicije za uvođenje}
+
+Da bi posrednik ovakvog tipa zaživio u produkciji, moraju biti zadovoljene vanjske
+pretpostavke, odnosno sustavi i vjerodajnice koje pruža okolina:
+
+\begin{tabularx}{\textwidth}{@{}lY@{}}
+\toprule
+\textbf{Predispozicija} & \textbf{Opis} \\
+\midrule
+Registracija posrednika & Upis u službeni registar Porezne uprave i u OpenPEPPOL mrežu (access point). \\
+Kvalificirani certifikati & Certifikati stranaka (vezani uz OIB) i certifikat samog posrednika (transportni), izdani od ovlaštenog tijela (npr. FINA). \\
+CIS dostupan kao web servis & Centralni informacijski sustav Porezne mora primati fiskalne poruke i vraćati potvrde s rezultatom uparivanja. \\
+Nacionalni adresar (AMS/MPS) & Imenik za otkrivanje koji posrednik opslužuje koji OIB, da pošiljatelj zna kamo dostaviti račun. \\
+Spremnost krajnjih korisnika & Obveznici (ili njihovi ERP-ovi) moraju moći proizvesti/zaprimiti UBL i imati valjan OIB. \\
+\bottomrule
+\end{tabularx}
+
+\begin{leftbar}
+U eRakunu su sve vanjske predispozicije oponašane radi cjelovite demonstracije:
+CIS i AMS zamjenjuje companion aplikacija \texttt{erakun-porezna}, a kvalificirane certifikate
+vlastiti testni PKI (zamjenjivost mock $\leftrightarrow$ produkcija: \ref{sec:di}).
+\end{leftbar}
+
+\subsection{Tko ima koristi}
+
+Uvođenje posrednika i eRačuna donosi korist širem krugu od samih krajnjih korisnika:
+
+\begin{itemize}[nosep]
+  \item \textbf{Poslovni subjekti (obveznici PDV-a)} dobivaju bržu i jeftiniju obradu, manje ručnog
+        unosa i pogrešaka, automatsko uparivanje s narudžbama te lakše ispunjavanje zakonske obveze.
+  \item \textbf{Računovodstveni servisi} dobivaju strukturirane podatke koji ulaze izravno u
+        knjigovodstvo, bez prepisivanja s PDF-a.
+  \item \textbf{Porezna uprava (država)} dobiva uvid u promet u stvarnom vremenu, automatsko
+        uparivanje prijava dobavljača i kupca te smanjenje porezne utaje i PDV jaza.
+  \item \textbf{Sami posrednici} dobivaju novu tržišnu ulogu i izvor prihoda (naknada po računu
+        ili pretplata) na zakonom potaknutom tržištu.
+  \item \textbf{Šire gospodarstvo} dobiva kraće rokove naplate, manje papira, bolju revizijsku
+        sljedivost i interoperabilnost s EU-om (PEPPOL).
+\end{itemize}
+
+\subsection{SWOT analiza}
+
+SWOT analiza promatra eRakun kao kandidat-rješenje informacijskog posrednika na
+opisanom tržištu, pri čemu su snage i slabosti unutarnje (svojstva samog rješenja), a prilike i
+prijetnje vanjske (tržište i okolina).
+
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\textwidth}{@{}>{\bfseries}l Y@{}}
+\toprule
+\multicolumn{2}{@{}l}{\textbf{Snage (Strengths)} (unutarnje, pozitivno)} \\
+\midrule
+Vjernost standardima & Implementira prave standarde (UBL 2.1 / HR-CIUS, EN 16931, AS4, XAdES-B, WS-Security), pa je tehnička prepreka za prelazak na produkciju niska. \\
+Slojevita arhitektura & Domena je odvojena od HTTP-a i transporta, a vanjski servisi su iza sučelja (\ref{sec:slojevi}), pa je mock zamjenjiv pravim sustavom bez diranja domene. \\
+Prava kriptografija & RSA-2048/SHA-256 potpisi i \emph{stvarna} verifikacija s provjerom lanca povjerenja, na oba sloja (dokument + transport). \\
+Otpornost & Idempotentne radnje, zaštita od ponavljanja (replay), odvojena (decoupled) dostava i fiskalizacija s ručnim ponavljanjem. \\
+\bottomrule
+\end{tabularx}
+
+\begin{tabularx}{\textwidth}{@{}>{\bfseries}l Y@{}}
+\toprule
+\multicolumn{2}{@{}l}{\textbf{Slabosti (Weaknesses)} (unutarnje, negativno)} \\
+\midrule
+Edukacijski opseg & CIS/AMS i PKI su oponašani, pa rješenje nije certificirano ni povezano s pravim FINA/OpenPEPPOL korijenima (puni popis granica opsega: \ref{sec:zakljucak}). \\
+Sigurnost API-ja & Nema autentikacije/autorizacije ERP klijenata, rate-limitinga ni multi-tenancyja. \\
+Bez GUI-a & Sustav je REST API i nema gotovog grafičkog sučelja za netehničke korisnike. \\
+\bottomrule
+\end{tabularx}
+
+\begin{tabularx}{\textwidth}{@{}>{\bfseries}l Y@{}}
+\toprule
+\multicolumn{2}{@{}l}{\textbf{Prilike (Opportunities)} (vanjske, pozitivno)} \\
+\midrule
+Zakonska obveza & Cijelo tržište obveznika PDV-a prisiljeno je na eRačun, što jamči potražnju. \\
+Ugradnja u ERP & Mogućnost ponude kao „white-label” motor unutar postojećih ERP/računovodstvenih sustava. \\
+Prekogranično (EU) & PEPPOL temelj omogućuje proširenje na prekograničnu razmjenu unutar EU-a. \\
+Dodatne usluge & Arhiviranje, analitika te povezivanje s plaćanjem i statusima izvori su dodatne vrijednosti. \\
+\bottomrule
+\end{tabularx}
+
+\begin{tabularx}{\textwidth}{@{}>{\bfseries}l Y@{}}
+\toprule
+\multicolumn{2}{@{}l}{\textbf{Prijetnje (Threats)} (vanjske, negativno)} \\
+\midrule
+Etablirana konkurencija & FINA, Moj-eRačun i veliki ERP dobavljači imaju prednost prvog ulaska i postojeću bazu korisnika. \\
+Troškovi sukladnosti & Certifikacija, sigurnosni zahtjevi i kontinuirano održavanje sukladnosti su skupi. \\
+Promjene specifikacija & HR-CIUS, KPD i fiskalni format se mijenjaju, što zahtijeva stalno održavanje. \\
+Sigurnosni rizik & Rukovanje privatnim ključevima i certifikatima stranaka nosi visok rizik kompromitacije. \\
+\bottomrule
+\end{tabularx}
+\renewcommand{\arraystretch}{1}
+
+\textbf{Zaključak SWOT-a:} na zakonom zajamčenom tržištu (prilika) glavna vrijednost rješenja je
+vjernost standardima i čista arhitektura (snage), dok su ključni rizici etablirana
+konkurencija i trošak sukladnosti. Slabosti su namjerne granice edukacijskog
+opsega, jasno označene da se ne prenose u produkciju (poglavlje \ref{sec:zakljucak}).
+
+% =============================================================================
 \section{Domenski kontekst}
 
 \subsection{Pojmovnik}
@@ -148,7 +302,7 @@ Testiranje & Pest; statička analiza Larastan/PHPStan; Rector; Pint \\
 \midrule
 \textbf{Informacijski posrednik} & Certificirani access point koji šalje/prima eRačune i fiskalizira ih. Uloga koju glumi eRakun. \\
 \textbf{eRačun} & Strukturirani elektronički račun (UBL 2.1 XML), pravno ekvivalentan papirnatom. \\
-\textbf{Fiskalizacija} & Prijava računa Poreznoj upravi (CIS); obje strane (dobavljač i kupac) prijavljuju isti račun, a CIS provodi \textbf{uparivanje} (matching) i vraća potvrdu. \\
+\textbf{Fiskalizacija} & Prijava računa CIS-u; obje strane prijavljuju isti račun, a CIS provodi uparivanje (matching) i vraća potvrdu. \\
 \textbf{CIS} & Centralni informacijski sustav Porezne uprave. U projektu: mock \texttt{erakun-porezna}. \\
 \textbf{Party (strana)} & Poslovni subjekt — dobavljač (\textit{supplier}) ili kupac (\textit{buyer}). Identificiran OIB-om. \\
 \textbf{OIB} & Osobni identifikacijski broj — 11 znamenki, kontrolna znamenka po ISO 7064 (MOD 11,10). \\
@@ -157,13 +311,17 @@ Testiranje & Pest; statička analiza Larastan/PHPStan; Rector; Pint \\
 \textbf{EN 16931} & Europska norma za elektroničko fakturiranje (semantički model računa). \\
 \textbf{KPD 2025} & Klasifikacija proizvoda po djelatnostima — 6-znamenkasti kôd na svakoj stavci računa. \\
 \textbf{AS4} & Protokol za sigurnu B2B razmjenu poruka (ebMS 3.0); transport između posrednika. \\
-\textbf{AMS / MPS} & Adresar metapodatkovnih servisa / Metapodatkovni servis — nacionalni imenik za otkrivanje endpointa primatelja po OIB-u. \\
+\textbf{AMS / MPS} & Adresar / Metapodatkovni servis — imenik za otkrivanje endpointa primatelja po OIB-u. \\
+\textbf{CA} & \textit{Certificate Authority} — certifikacijsko tijelo koje izdaje i potpisuje certifikate; vrh lanca povjerenja. Korijenska (root) CA je samopotpisana. U projektu: testne FINA-like i PEPPOL-like CA (u produkciji prave FINA i OpenPEPPOL). \\
+\textbf{CN} & \textit{Common Name} — polje u subjektu X.509 certifikata koje identificira vlasnika. U projektu se OIB stranke upisuje kao \texttt{CN} (kao kod prave FINA-e). \\
+\midrule
+\textbf{Standardi po slojevima} & Format: UBL 2.1 / HR-CIUS (semantika EN 16931-1:2017); transport: AS4 (ebMS 3.0); potpis: XAdES-B (dokument) + WS-Security (transport); klasifikacija: KPD 2025; otkrivanje: AMS + MPS. \\
 \bottomrule
 \end{tabularx}
 
 \subsection{4-corner model}
 
-Razmjena eRačuna odvija se kroz \textbf{četiri ugla} (peti je Porezna). Pošiljatelj nikad ne
+Razmjena eRačuna odvija se kroz četiri ugla (peti je Porezna). Pošiljatelj nikad ne
 šalje izravno primatelju — sve ide preko posrednika:
 
 \begin{center}
@@ -195,24 +353,9 @@ Razmjena eRačuna odvija se kroz \textbf{četiri ugla} (peti je Porezna). Pošil
   \item \textbf{Kut 5 — CIS / Porezna:} prima fiskalne poruke, provodi uparivanje i vraća potvrdu s identifikatorom poruke.
 \end{itemize}
 
-eRakun je \textbf{jedna aplikacija koja pokriva i kut 2 i kut 3} — ista instanca može biti
+eRakun je jedna aplikacija koja pokriva i kut 2 i kut 3 — ista instanca može biti
 pošiljatelj za jedne i primatelj za druge račune. Za demonstraciju punog round-tripa
-pokreću se \textbf{dvije instance} eRakuna (sender + receiver).
-
-\subsection{Standardi i protokoli}
-
-\begin{tabularx}{\textwidth}{@{}lY@{}}
-\toprule
-\textbf{Komponenta} & \textbf{Standard} \\
-\midrule
-Format računa & UBL 2.1 + hrvatske ekstenzije (HR-FISK 2.0 CIUS) \\
-Semantički model & EN 16931-1:2017 \\
-Transport posrednik$\leftrightarrow$posrednik & AS4 (ebMS 3.0 / AS4 profil) \\
-Digitalni potpis & Kvalificirani certifikati s OIB-om, XAdES-B vremenske oznake \\
-Klasifikacija proizvoda & KPD 2025 (6-znamenkasti kôdovi) \\
-Otkrivanje adrese & AMS (adresar) + MPS (metapodaci) \\
-\bottomrule
-\end{tabularx}
+pokreću se dvije instance eRakuna (sender + receiver).
 
 % =============================================================================
 \section{Arhitektura sustava}
@@ -224,26 +367,20 @@ Otkrivanje adrese & AMS (adresar) + MPS (metapodaci) \\
 \textbf{Aplikacija} & \textbf{Uloga} \\
 \midrule
 \texttt{erakun} (ovaj repozitorij) & Informacijski posrednik. Pokriva kut 2 i kut 3. Sadrži i MPS (vlastiti metapodatkovni servis). \\
-\texttt{erakun-porezna} (companion) & Oponaša državne servise: \textbf{CIS} (prima fiskalne poruke, vraća potvrdu s identifikatorom poruke \texttt{service\_message\_id}) i \textbf{AMS} (nacionalni adresar za discovery). \\
+\texttt{erakun-porezna} (companion) & Oponaša državne servise: CIS (prima fiskalne poruke, vraća potvrdu s identifikatorom poruke \texttt{service\_message\_id}) i AMS (nacionalni adresar za discovery). \\
 \bottomrule
 \end{tabularx}
 
-Komunikacija eRakun $\rightarrow$ Porezna ide preko HTTP-a; svaki vanjski servis sakriven je iza
-sučelja (interface) pa je mock zamjenjiv pravim sustavom bez promjene domenskog koda.
+Komunikacija eRakun $\rightarrow$ Porezna ide preko HTTP-a; svaki vanjski servis skriven je iza
+sučelja, pa je mock zamjenjiv pravim sustavom bez diranja domene (mehanizam u \ref{sec:di}).
 
-\subsection{Slojevi i obrasci}
+\subsection{Slojevi i obrasci}\label{sec:slojevi}
 
-Projekt slijedi Laravel konvencije uz dvije svjesne odluke o stilu:
-
-\textbf{(a) Kontroleri izlažu samo REST.} Svaki kontroler ima samo standardne resource
-metode (\texttt{index}, \texttt{show}, \texttt{store}, \texttt{update}, \texttt{destroy}). Domenske radnje koje nisu čisti
-CRUD dobivaju \textbf{vlastiti kontroler} (npr. \texttt{InvoiceFiscalizationController@store},
-\texttt{InvoiceDeliveryController@store}) umjesto proizvoljnih metoda na jednom kontroleru.
-
-\textbf{(b) Poslovna logika živi u Action klasama.} Kontroleri su tanki — validiraju ulaz i
-delegiraju na \textbf{Action} klasu (\texttt{app/Actions/}) koja izvodi radnju. Primjeri:
-\texttt{CreateInvoice}, \texttt{TransitionInvoiceStatus}, \texttt{SubmitFiscalization}, \texttt{SubmitAs4Delivery},
-\texttt{ReceiveInbound}, \texttt{ReceiveAs4Message}.
+Projekt slijedi Laravel konvencije uz svjesnu odluku da kontroleri ostanu tanki: izlažu
+samo REST resource rute, a svu poslovnu logiku nose Action klase (\texttt{app/Actions/}).
+Radnje koje nisu čisti CRUD (fiskalizacija, AS4 dostava) dobivaju vlastiti kontroler umjesto
+proizvoljnih metoda na jednom kontroleru. Time je domenska logika izolirana od HTTP sloja i
+lako testabilna, a vidljiva je i u use case-ovima (svaki navodi pripadnu Action klasu).
 
 Gruba podjela odgovornosti po direktorijima:
 
@@ -256,7 +393,7 @@ Gruba podjela odgovornosti po direktorijima:
 \texttt{app/Http/Resources} & Oblikovanje JSON odgovora \\
 \texttt{app/Actions} & Poslovne radnje (domenska jezgra) \\
 \texttt{app/Models} & Eloquent modeli + invarijante stanja \\
-\texttt{app/Enums} & Stanja, smjerovi, tipovi (vidi 3.4) \\
+\texttt{app/Enums} & Stanja, smjerovi, tipovi (vidi \ref{sec:stanja}) \\
 \texttt{app/Validation} & UBL XSD/Schematron validacija (\texttt{UblValidator}) \\
 \texttt{app/Pki} & Generiranje testnog PKI-ja, potpisne vjerodajnice, trust store \\
 \texttt{app/As4} & AS4 transport (envelope build/sign, dostava, prijem, peer discovery) \\
@@ -265,11 +402,11 @@ Gruba podjela odgovornosti po direktorijima:
 \bottomrule
 \end{tabularx}
 
-\subsection{Tijek izlaznog računa (high-level)}
+\subsection{Tijek izlaznog računa (high-level)}\label{sec:tijek}
 
-Središnja orkestracija je \textbf{\texttt{TransitionInvoiceStatus}} — jedini siguran put za
+Središnja orkestracija je \texttt{TransitionInvoiceStatus} — jedini siguran put za
 mijenjanje statusa računa. On prvo provjeri je li prijelaz dopušten, zatim (po potrebi)
-\textbf{renderira i potpiše UBL prije} promjene statusa (tako neispravan dokument ostavlja
+renderira i potpiše UBL prije promjene statusa (tako neispravan dokument ostavlja
 račun u zatečenom stanju), i tek onda okida side-effecte:
 
 \begin{center}
@@ -293,15 +430,13 @@ račun u zatečenom stanju), i tek onda okida side-effecte:
 \end{tikzpicture}
 \end{center}
 
-Ključna projektna odluka: \textbf{dostava i fiskalizacija su odvojene (decoupled).} Ako
-AS4 dostava ili fiskalizacija ne uspiju, prijelaz statusa se \textbf{ne poništava} — greška se
-trajno zapiše na pripadni red (\texttt{as4\_messages} / \texttt{fiscal\_messages}) i izloži kroz API, a
-pozivatelj radnju ponovi preko \texttt{POST /invoices/\{id\}/deliver} odnosno
-\texttt{POST /invoices/\{id\}/fiscalize}.
+Ključna projektna odluka: dostava i fiskalizacija su odvojene (decoupled) — ako ne uspiju,
+prijelaz statusa se ne poništava, nego se greška trajno zapiše na pripadni red i izloži kroz
+API. Ručni ponovni pokušaj razrađen je u UC-B6/UC-B7.
 
-\subsection{Stanja i prijelazi}
+\subsection{Stanja i prijelazi}\label{sec:stanja}
 
-Domena je modelirana kroz enume — svaki entitet ima \textbf{stanje}, neki i \textbf{smjer}:
+Domena je modelirana kroz enume — svaki entitet ima stanje, neki i smjer:
 
 \begin{tabularx}{\textwidth}{@{}l >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{3.6cm}@{}}
 \toprule
@@ -322,10 +457,10 @@ Domena je modelirana kroz enume — svaki entitet ima \textbf{stanje}, neki i \t
 \begin{leftbar}
 Dopušteni prijelazi definirani su na enumu \texttt{InvoiceStatus} (\texttt{allowedTransitions} /
 \texttt{canTransitionTo}), a \texttt{Invoice::transitionTo} je čuvani ulaz koji delegira na enum;
-detaljna matrica prijelaza dokumentirana je u poglavlju 4.
+detaljna matrica prijelaza dokumentirana je u poglavlju \ref{sec:izlazni}.
 \end{leftbar}
 
-\subsection{Konfiguracija i zamjenjivost (DI)}
+\subsection{Konfiguracija i zamjenjivost (DI)}\label{sec:di}
 
 Sve vanjske ovisnosti registrirane su kao singletoni u \texttt{AppServiceProvider} i sakrivene
 iza sučelja, pa je mock zamjenjiv pravim servisom samo promjenom konfiguracije:
@@ -333,12 +468,60 @@ iza sučelja, pa je mock zamjenjiv pravim servisom samo promjenom konfiguracije:
 \begin{itemize}[nosep]
   \item \texttt{FiscalizationService} $\rightarrow$ \texttt{HttpFiscalizationService} (URL/timeout iz \texttt{services.fiscalization})
   \item \texttt{As4DeliveryService} $\rightarrow$ \texttt{HttpAs4DeliveryService} (envelope builder + signer + peer resolver)
-  \item \texttt{PeerEndpointResolver} $\rightarrow$ \texttt{AmsMpsPeerEndpointResolver} s \textbf{fallbackom} na
+  \item \texttt{PeerEndpointResolver} $\rightarrow$ \texttt{AmsMpsPeerEndpointResolver} s fallbackom na
         \texttt{ConfigPeerEndpointResolver} (statička mapa \texttt{OIB=URL} iz konfiguracije) — discovery prvo
         pokuša AMS, pa padne na lokalnu mapu
   \item PKI: \texttt{TestPkiGenerator}, \texttt{AccessPointCredential}, \texttt{TrustStore} (vjeruje dvama testnim
         korijenima — „FINA-like” za stranke i „PEPPOL-like” za access pointe)
 \end{itemize}
+
+\subsection{Sigurnost: PKI i potpisi}\label{sec:pki}
+
+Potpisivanje i verifikacija su prava kriptografija (RSA-2048, SHA-256; OpenSSL +
+\texttt{robrichards/xmlseclibs}); jedino su korijeni povjerenja samo-generirani
+(testni PKI) umjesto pravih FINA/OpenPEPPOL korijena. Sustav vjerno odražava PEPPOL podjelu na
+dokumentni i transportni sloj, s dva odvojena certifikata — ulazni dokument
+nosi oba potpisa, koja se provjeravaju pri prijemu i ingestiji (usp. UC-C2):
+
+\begin{tabularx}{\textwidth}{@{}lYYll@{}}
+\toprule
+\textbf{Sloj} & \textbf{Što potpisuje} & \textbf{Čime} & \textbf{Standard} & \textbf{Kod} \\
+\midrule
+\textbf{Dokumentni} & UBL račun (enveloped) & certifikat stranke (FINA-like) & XAdES-B & \texttt{InvoiceSigner} \\
+\textbf{Transportni} & AS4 envelope (payload) & certifikat access pointa (PEPPOL-like) & WS-Security & \texttt{As4EnvelopeSigner} \\
+\bottomrule
+\end{tabularx}
+
+XAdES-B potpis je enveloped (reference na dokument i na \texttt{SignedProperties} sa
+\texttt{SigningTime}), računa se nad in-memory DOM-om i pohranjuje verbatim — naknadno
+„uljepšavanje” ubacilo bi bjeline koje digesti nisu vidjeli i tiho slomilo verifikaciju.
+
+\textbf{Testni PKI.} \texttt{php artisan pki:generate} stvara dvije samopotpisane korijenske CA:
+certifikati stranaka izdaju se s FINA-like CA (CN = OIB, kao prava FINA), a certifikat
+access pointa s PEPPOL-like CA. Privatni ključevi pišu se na gitignoran PKI disk i nikad
+ne napuštaju poslužitelj ni API; \texttt{TrustStore} vjeruje upravo tim dvama korijenima.
+
+\begin{center}
+\begin{tikzpicture}[
+  font=\small, >={Stealth[]},
+  ca/.style={draw,rounded corners,align=center,minimum width=4cm},
+  leaf/.style={draw,align=center,minimum width=4cm}
+]
+\node[ca] (fina) {FINA-like root CA\\\texttt{(ca/fina.crt)}};
+\node[ca,right=2cm of fina] (pep) {OpenPEPPOL-like root CA\\\texttt{(ca/peppol.crt)}};
+\node[leaf,below=1.4cm of fina] (party) {certifikati stranaka\\(CN = OIB stranke)\\[2pt]\scriptsize— dokumentni potpis};
+\node[leaf,below=1.4cm of pep] (ap) {certifikat access pointa\\\texttt{(ap/ap.crt)}\\[2pt]\scriptsize— transportni potpis};
+\draw[->] (fina) -- (party);
+\draw[->] (pep) -- (ap);
+\end{tikzpicture}
+\end{center}
+
+Verifikacija (\texttt{SignatureVerifier}) je stvarna i radi tri provjere:
+\textbf{autentičnost} (\texttt{SignatureValue} provjeren javnim ključem iz ugrađenog certifikata),
+\textbf{integritet} (ponovni digest svake reference iz živog dokumenta uz \texttt{hash\_equals} — svaka
+izmjena nakon potpisa daje \texttt{digestMismatch}) i \textbf{povjerenje} (lanac do povjerljivog CA +
+rok valjanosti), na obje strane razmjene. Pri potpisivanju se koristi jedini aktivni
+certifikat stranke; bez njega se baca iznimka — dokument nikad ne izlazi nepotpisan.
 
 % =============================================================================
 \section{Use case-ovi}
@@ -351,12 +534,11 @@ Ovo je središnje poglavlje. Use case-ovi su grupirani u tri cjeline:
   \item \textbf{C. Ulazni račun} — prijem iz ERP-a, prijem preko AS4, sravnjivanje
 \end{itemize}
 
-Svaki use case opisan je predloškom: \textbf{akteri}, \textbf{preduvjeti}, \textbf{glavni tok},
-\textbf{posljedice/side-effecti}, te \textbf{alternativni tokovi i greške}. Tokovi su izvedeni iz
-stvarnog koda (Action klase, kontroleri, modeli), ne iz razvojnih bilješki.
+Svaki use case opisan je predloškom: akteri, preduvjeti, glavni tok, posljedice/side-effecti te
+alternativni tokovi i greške. Tokovi su izvedeni iz stvarnog koda (Action klase, kontroleri,
+modeli), ne iz razvojnih bilješki.
 
-\begin{leftbar}
-\textbf{Akteri u sustavu}
+\textbf{Akteri u sustavu:}
 \begin{itemize}[nosep]
   \item \textbf{ERP dobavljača / kupca} — vanjski sustav koji preko REST API-ja komunicira s posrednikom.
   \item \textbf{Administrator posrednika} — onboarda stranke i učitava certifikate.
@@ -364,13 +546,105 @@ stvarnog koda (Action klase, kontroleri, modeli), ne iz razvojnih bilješki.
   \item \textbf{CIS (Porezna)} — prima fiskalne poruke, provodi uparivanje, vraća potvrdu s identifikatorom poruke. (mock: \texttt{erakun-porezna})
   \item \textbf{AMS (nacionalni adresar)} — imenik za otkrivanje endpointa. (mock: \texttt{erakun-porezna})
 \end{itemize}
-\end{leftbar}
+
+\subsection{Krovni Use Case dijagram}
+
+Dijagram prikazuje cijeli sustav: lijevo su ljudski/ERP akteri, desno vanjski
+sustavi (\guillemotleft sustav\guillemotright) s kojima posrednik komunicira, a u sredini su
+use case-ovi grupirani u tri cjeline (A — registar, B — izlazni račun, C — ulazni račun). Radi
+preglednosti krovni dijagram spaja srodne čitateljske radnje u jedan use case
+(npr. \emph{Pregled / dohvat računa} pokriva UC-B2/B3/B4); pojedinačni use case-ovi razrađeni
+su u nastavku poglavlja (UC-A1 \dots UC-C3).
+
+\begin{center}
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  >={Stealth[]},
+  uc/.style={draw,ellipse,align=center,font=\scriptsize,inner sep=1.5pt,
+             minimum width=2.7cm,minimum height=0.95cm,fill=white},
+  act/.style={align=center,font=\scriptsize,text width=2.2cm},
+  rel/.style={gray!65,thin},
+  inc/.style={->,dashed,gray!55,font=\scriptsize}
+]
+\tikzset{stick/.pic={
+  \draw[thick] (0,0.45) circle(0.16);
+  \draw[thick] (0,0.29) -- (0,-0.25);
+  \draw[thick] (-0.28,0.08) -- (0.28,0.08);
+  \draw[thick] (0,-0.25) -- (-0.2,-0.65);
+  \draw[thick] (0,-0.25) -- (0.2,-0.65);
+}}
+
+% --- System boundary ---
+\node[draw,rounded corners,minimum width=11cm,minimum height=12cm,
+      label={[font=\bfseries]north:eRakun — informacijski posrednik}]
+      (sys) at (8.5,6.3) {};
+\node[rotate=90,gray,font=\itshape\scriptsize] at (3.45,10.4) {A. Registar};
+\node[rotate=90,gray,font=\itshape\scriptsize] at (3.45,5.95) {B. Izlazni račun};
+\node[rotate=90,gray,font=\itshape\scriptsize] at (3.45,1.9) {C. Ulazni račun};
+\draw[gray!40,dashed] (3.1,8.55) -- (13.9,8.55);
+\draw[gray!40,dashed] (3.1,3.35) -- (13.9,3.35);
+
+% --- Human / ERP actors (left) ---
+\node[act] (adm)  at (0,9.9) {Administrator posrednika};   \pic at (0,10.85) {stick};
+\node[act] (erpd) at (0,6.2) {ERP dobavljača};             \pic at (0,7.15) {stick};
+\node[act] (erpk) at (0,1.9) {ERP kupca};                  \pic at (0,2.85) {stick};
+
+% --- External system actors (right) ---
+\node[act] (ams)  at (17,10.6) {\guillemotleft sustav\guillemotright\\ AMS\\(nac. adresar)}; \pic at (17,11.7) {stick};
+\node[act] (peer) at (17,6.4)  {Drugi posrednik\\(peer access point)};                       \pic at (17,7.45) {stick};
+\node[act] (cis)  at (17,2.4)  {\guillemotleft sustav\guillemotright\\ CIS / Porezna};        \pic at (17,3.5) {stick};
+
+% --- Use cases ---
+\node[uc] (a1)  at (5.4,10.8) {UC-A1\\ Registracija stranke};
+\node[uc] (a34) at (5.4,9.4)  {UC-A3/A4\\ Upravljanje certifikatima};
+\node[uc] (a5)  at (11.6,10.6) {UC-A5\\ Otkrivanje primatelja (MPS)};
+
+\node[uc] (b1)  at (5.4,7.9)  {UC-B1\\ Kreiranje računa};
+\node[uc] (b24) at (5.4,6.2)  {UC-B2/B3/B4\\ Pregled / UBL};
+\node[uc] (b5)  at (8.6,7.2)   {UC-B5\\ Prijelaz statusa};
+\node[uc] (b6)  at (11.6,5.6)  {UC-B6\\ Fiskalizacija};
+\node[uc] (b7)  at (11.6,4.1)  {UC-B7\\ AS4 dostava};
+
+\node[uc] (c1)  at (5.4,2.5)  {UC-C1\\ Prijem iz ERP-a};
+\node[uc] (c3)  at (8.6,1.4)   {UC-C3\\ Predaja kupcu + fiskalizacija};
+\node[uc] (c2)  at (11.6,2.5)  {UC-C2\\ Prijem preko AS4};
+
+% --- Associations (actor — use case) ---
+\draw[rel] (adm)  -- (a1);
+\draw[rel] (adm)  -- (a34);
+\draw[rel] (erpd) -- (b1);
+\draw[rel] (erpd) -- (b24);
+\draw[rel] (erpd) -- (b5);
+\draw[rel] (erpk) -- (c1);
+\draw[rel] (erpk) -- (c3);
+\draw[rel] (peer.west) -- (a5.east);
+\draw[rel] (peer.west) -- (b7.east);
+\draw[rel] (peer.west) -- (c2.east);
+\draw[rel] (cis.west)  -- (b6.east);
+\draw[rel] (cis.west)  -- (c3.east);
+\draw[rel] (ams.west)  -- (a5.east);
+\draw[rel] (ams.west)  -- (b7.east);
+
+% --- Include relations ---
+\draw[inc] (b5) -- node[above,sloped,pos=0.62]{\guillemotleft include\guillemotright} (b6);
+\draw[inc] (b5) -- node[above,sloped,pos=0.38]{\guillemotleft include\guillemotright} (b7);
+\draw[inc] (c3) -- node[below,sloped,pos=0.55]{\guillemotleft include\guillemotright} (b6);
+\end{tikzpicture}%
+}
+\end{center}
+
+Komunikacija s vanjskim sustavima (desni akteri) vidljiva je izravno na dijagramu:
+CIS prima fiskalne poruke (UC-B6, UC-C3), drugi posrednik razmjenjuje AS4
+poruke (UC-B7 izlaz, UC-C2 ulaz) i pita naš MPS (UC-A5), a AMS se koristi pri najavi
+stranke (UC-A1) i otkrivanju primatelja (UC-B7). Prijelaz statusa (UC-B5) je orkestracijski
+use case koji \guillemotleft include\guillemotright-a fiskalizaciju i dostavu; predaja kupcu
+(UC-C3) \guillemotleft include\guillemotright-a fiskalizaciju sa strane primatelja.
 
 \subsection{A. Registar i postavljanje}
 
 Prije nego što ijedan račun može proteći kroz sustav, posrednik mora poznavati
-\textbf{stranke} (dobavljače i kupce) i imati njihove \textbf{potpisne certifikate}. Ova cjelina
-pokriva i \textbf{otkrivanje} (discovery) — kako jedan posrednik pronalazi gdje dostaviti
+stranke (dobavljače i kupce) i imati njihove potpisne certifikate. Ova cjelina
+pokriva i otkrivanje (discovery) — kako jedan posrednik pronalazi gdje dostaviti
 račun za zadani OIB.
 
 \subsubsection{UC-A1 — Registracija stranke (onboarding)}
@@ -390,8 +664,8 @@ račun za zadani OIB.
 \begin{enumerate}[nosep]
   \item ERP/administrator šalje podatke o stranci: \texttt{oib}, \texttt{name}, \texttt{address\_line}, \texttt{city},
         \texttt{postcode} (5 znakova), opcionalno \texttt{is\_vat\_registered}, \texttt{country\_code} (2 znaka), \texttt{iban}.
-  \item \texttt{StorePartyRequest} validira ulaz: \textbf{OIB se provjerava pravilom \texttt{Oib}} (11 znamenki +
-        kontrolna znamenka ISO 7064, MOD 11,10) i mora biti \textbf{jedinstven} (\texttt{unique:parties,oib}).
+  \item \texttt{StorePartyRequest} validira ulaz: OIB se provjerava pravilom \texttt{Oib} (11 znamenki +
+        kontrolna znamenka ISO 7064, MOD 11,10) i mora biti jedinstven (\texttt{unique:parties,oib}).
   \item Stranka se kreira u tablici \texttt{parties}.
   \item \textbf{Najava u AMS-u:} \texttt{RegisterParticipant} objavljuje stranku u nacionalnom adresaru kao
         mapiranje \texttt{OIB $\rightarrow$ MPS base URL} ovog posrednika, kako bi drugi posrednici znali da mi
@@ -406,7 +680,7 @@ opslužuje dati OIB.
 \begin{itemize}[nosep]
   \item Nevaljan/duplikat OIB ili nedostajuća polja $\rightarrow$ \texttt{422 Unprocessable Entity} (Laravel validacija).
   \item \textbf{AMS najava je best-effort:} ako MPS base URL nije konfiguriran (\texttt{RegisterParticipant}
-        vrati \texttt{false}) ili je AMS nedostupan, onboarding \textbf{svejedno uspijeva} — registracija
+        vrati \texttt{false}) ili je AMS nedostupan, onboarding svejedno uspijeva — registracija
         stranke se ne poništava zbog neuspjele najave.
 \end{itemize}
 
@@ -442,15 +716,15 @@ Nepostojeća stranka $\rightarrow$ \texttt{404}.
 \begin{enumerate}[nosep]
   \item Administrator šalje certifikat na jedan od dva načina (\texttt{StoreCertificateRequest}):
     \begin{itemize}[nosep]
-      \item \textbf{datoteka} \texttt{certificate} — PKCS\#12 (\texttt{.p12}/\texttt{.pfx}, do 50 MB), ili
+      \item datoteka \texttt{certificate} — PKCS\#12 (\texttt{.p12}/\texttt{.pfx}, do 50 MB), ili
       \item polje \texttt{certificate\_pem} — PEM string koji nosi certifikat (po želji i privatni ključ),
       \item uz opcionalni \texttt{password}.
     \end{itemize}
   \item \texttt{StoreCertificate.normalize()} prepoznaje format (binarni PKCS\#12 vs. PEM s \texttt{-----BEGIN-----}
-        omotom) i \textbf{normalizira na PEM}, izdvajajući privatni ključ i certifikat (OpenSSL).
+        omotom) i normalizira na PEM, izdvajajući privatni ključ i certifikat (OpenSSL).
   \item \texttt{CertificateMetadata::fromPem()} iz certifikata izvlači metapodatke: serijski broj,
         subject, issuer, rok valjanosti (\texttt{valid\_from}/\texttt{valid\_to}), fingerprint.
-  \item \textbf{Pohrana ključa:} privatni ključ i certifikat zapisuju se na \textbf{gitignoran PKI disk}
+  \item \textbf{Pohrana ključa:} privatni ključ i certifikat zapisuju se na gitignoran PKI disk
         pod \texttt{parties/\{oib\}/\{serial\}.key} i \texttt{.crt}.
   \item \textbf{Invarijanta „samo jedan aktivan”:} u jednoj transakciji prethodni \texttt{Active} certifikat
         stranke prelazi u \texttt{Superseded}, a novi se kreira kao \texttt{Active}.
@@ -465,11 +739,6 @@ postaje \texttt{superseded}; privatni ključ pohranjen na PKI disku (nikad se ne
   \item Pogrešna lozinka ili neispravan PKCS\#12 $\rightarrow$ \texttt{422} („Unable to read PKCS\#12\dots”).
   \item PEM bez valjanog X.509 certifikata ili bez čitljivog privatnog ključa $\rightarrow$ \texttt{422}.
 \end{itemize}
-
-\begin{leftbar}
-\textbf{Sigurnosna napomena:} \texttt{CertificateResource} izlaže \textbf{samo javni} \texttt{certificate\_pem}
-i metapodatke. Privatni ključ nikad nije dio odgovora.
-\end{leftbar}
 
 \subsubsection{UC-A4 — Pregled, dohvat i opoziv certifikata}
 
@@ -486,7 +755,7 @@ i metapodatke. Privatni ključ nikad nije dio odgovora.
 \begin{itemize}[nosep]
   \item \textbf{Pregled} (\texttt{index}): lista certifikata stranke, najnoviji prvi.
   \item \textbf{Dohvat} (\texttt{show}): pojedini certifikat (scoped binding veže \texttt{\{certificate\}} uz \texttt{\{party\}}).
-  \item \textbf{Opoziv} (\texttt{destroy}): certifikatu se status postavlja na \textbf{\texttt{revoked}} i vraća se
+  \item \textbf{Opoziv} (\texttt{destroy}): certifikatu se status postavlja na \texttt{revoked} i vraća se
         \texttt{204 No Content}. Opoziv je „meki” — red se ne briše, čime ostaje revizijski trag, a
         potpisani dokumenti nastali dok je bio aktivan i dalje su provjerivi.
 \end{itemize}
@@ -503,7 +772,7 @@ i metapodatke. Privatni ključ nikad nije dio odgovora.
 \end{tabularx}
 
 \textbf{Koncept:} MPS (\textit{Metapodatkovni servis}) ovog posrednika objavljuje koje stranke
-opslužujemo. Nema vlastitu tablicu — odgovor je \textbf{izveden} iz \texttt{parties} tablice i
+opslužujemo. Nema vlastitu tablicu — odgovor je izveden iz \texttt{parties} tablice i
 konfiguracije.
 
 \textbf{Glavni tok:}
@@ -514,14 +783,7 @@ konfiguracije.
   \item Inače $\rightarrow$ \texttt{404}.
 \end{enumerate}
 
-\begin{leftbar}
-\textbf{Veza s discoveryjem:} na strani pošiljatelja, \texttt{AmsMpsPeerEndpointResolver} prvo pita
-AMS (nacionalni adresar) koji MPS opslužuje traženi OIB, zatim taj MPS za konkretan AS4
-endpoint, uz \textbf{fallback} na statičku \texttt{OIB=URL} mapu iz konfiguracije
-(\texttt{ConfigPeerEndpointResolver}). Detaljnije u cjelini B (AS4 dostava).
-\end{leftbar}
-
-\subsection{B. Izlazni račun}
+\subsection{B. Izlazni račun}\label{sec:izlazni}
 
 Ovo je glavni tok sustava (kut 2 — posrednik pošiljatelj). Dobavljačev ERP kreira račun,
 posrednik ga gura kroz životni ciklus, generira i potpisuje UBL, fiskalizira ga prema CIS-u
@@ -573,14 +835,14 @@ Matrica dopuštenih prijelaza (\texttt{InvoiceStatus::allowedTransitions}):
 nema prijelaza. Svaki nedopušteni prijelaz baca \texttt{InvalidInvoiceTransitionException}.
 \end{leftbar}
 
-Side-effecti su vezani uz \textbf{ciljno stanje + smjer} (\texttt{TransitionInvoiceStatus}):
+Side-effecti su vezani uz ciljno stanje i smjer (\texttt{TransitionInvoiceStatus}):
 
 \begin{tabularx}{\textwidth}{@{}llY@{}}
 \toprule
 \textbf{Prijelaz} & \textbf{Smjer} & \textbf{Side-effect} \\
 \midrule
 $\rightarrow$ \texttt{queued} & outbound & renderiraj + potpiši + validiraj UBL, pohrani ga (\texttt{StoreInvoiceUbl}) \\
-$\rightarrow$ \texttt{sent} & outbound & AS4 dostava (\texttt{SubmitAs4Delivery}) \textbf{i} fiskalizacija (\texttt{SubmitFiscalization}) \\
+$\rightarrow$ \texttt{sent} & outbound & AS4 dostava (\texttt{SubmitAs4Delivery}) i fiskalizacija (\texttt{SubmitFiscalization}) \\
 $\rightarrow$ \texttt{delivered} & inbound & fiskalizacija sa strane primatelja (cjelina C) \\
 \bottomrule
 \end{tabularx}
@@ -604,17 +866,17 @@ $\rightarrow$ \texttt{delivered} & inbound & fiskalizacija sa strane primatelja 
         opc. \texttt{due\_date}, \texttt{direction}, opc. \texttt{currency}) i polje \texttt{lines} ($\geq$ 1 stavka).
   \item \texttt{StoreInvoiceRequest} validira:
     \begin{itemize}[nosep]
-      \item oba OIB-a valjana (\texttt{Oib}) i \textbf{postoje} (\texttt{exists:parties,oib}); kupac \textbf{različit} od dobavljača,
-      \item \texttt{invoice\_number} \textbf{jedinstven po dobavljaču} (kombinacija supplier + broj),
+      \item oba OIB-a valjana (\texttt{Oib}) i postoje (\texttt{exists:parties,oib}); kupac različit od dobavljača,
+      \item \texttt{invoice\_number} jedinstven po dobavljaču (kombinacija supplier + broj),
       \item \texttt{due\_date} (ako je dan) \texttt{after\_or\_equal} \texttt{issue\_date},
       \item svaka stavka: \texttt{description}, \texttt{quantity > 0}, \texttt{unit\_price > 0}, \texttt{vat\_rate} 0--100,
-            \texttt{vat\_category} (\texttt{S}/\texttt{Z}/\texttt{E}), \textbf{\texttt{kpd\_code} točno 6 znakova} (obavezan), opc. \texttt{unit\_code} (3 znaka).
+            \texttt{vat\_category} (\texttt{S}/\texttt{Z}/\texttt{E}), \texttt{kpd\_code} točno 6 znakova (obavezan), opc. \texttt{unit\_code} (3 znaka).
     \end{itemize}
-  \item \texttt{CreateInvoice} u \textbf{transakciji}: razriješi dobavljača/kupca po OIB-u, za svaku stavku
+  \item \texttt{CreateInvoice} u transakciji: razriješi dobavljača/kupca po OIB-u, za svaku stavku
         izračuna \texttt{line\_total = quantity × unit\_price} i \texttt{line\_tax = line\_total × vat\_rate / 100}
-        (svi izračuni preko \textbf{\texttt{bcmath}}, fiksna decimalna preciznost — bez float grešaka),
+        (svi izračuni preko \texttt{bcmath}, fiksna decimalna preciznost — bez float grešaka),
         te zbroji \texttt{net\_amount}, \texttt{tax\_amount}, \texttt{total\_amount}.
-  \item Račun se sprema sa statusom \textbf{\texttt{draft}} (status nije mass-assignable — \texttt{Draft} je rodno
+  \item Račun se sprema sa statusom \texttt{draft} (status nije mass-assignable — \texttt{Draft} je rodno
         stanje), zatim se kreiraju stavke. \texttt{unit\_code} default je \texttt{H87} (komad).
   \item Vraća se \texttt{201 Created} s \texttt{InvoiceResource} (s učitanim \texttt{supplier}, \texttt{buyer}, \texttt{lines}).
 \end{enumerate}
@@ -661,17 +923,17 @@ Vraća pojedini račun s relacijama; nepostojeći $\rightarrow$ \texttt{404}.
 
 \textbf{Glavni tok:}
 \begin{enumerate}[nosep]
-  \item Ako račun \textbf{ima pohranjeni UBL} (\texttt{ubl\_xml\_path} postavljen, dokument se streama s diska)
-        $\rightarrow$ vrati ga (\texttt{Content-Type: application/xml}). To su \textbf{točni potpisani bajtovi}.
-  \item Inače, ako je račun \textbf{\texttt{draft} + \texttt{outbound}} $\rightarrow$ renderiraj \textbf{nepotpisani draft} UBL
+  \item Ako račun ima pohranjeni UBL (\texttt{ubl\_xml\_path} postavljen, dokument se streama s diska)
+        $\rightarrow$ vrati ga (\texttt{Content-Type: application/xml}). To su točni potpisani bajtovi.
+  \item Inače, ako je račun \texttt{draft} + \texttt{outbound} $\rightarrow$ renderiraj nepotpisani draft UBL
         on-the-fly (\texttt{renderer->draft()}) kao pretpregled mapiranja.
   \item Inače $\rightarrow$ \texttt{404} (npr. inbound bez pohranjenog dokumenta).
 \end{enumerate}
 
 \begin{leftbar}
-\textbf{Byte-fidelity:} potpisani UBL pohranjuje se i vraća \textbf{nepromijenjen}. Potpis
-(XML-DSig) računa se nad DOM-om, pa bi ponovno serijaliziranje/„uljepšavanje” ubacilo
-bjeline koje digesti nisu vidjeli i tiho slomilo verifikaciju. (Detalji u poglavlju 7.)
+\textbf{Byte-fidelity:} pohranjeni UBL vraća se nepromijenjen — to su točni potpisani
+bajtovi. Zašto se dokument ne smije ponovno serijalizirati ni „uljepšavati” objašnjeno je uz
+potpisivanje (\ref{sec:pki}).
 \end{leftbar}
 
 \subsubsection{UC-B5 — Prijelaz statusa (životni ciklus)}
@@ -685,29 +947,17 @@ bjeline koje digesti nisu vidjeli i tiho slomilo verifikaciju. (Detalji u poglav
 \bottomrule
 \end{tabularx}
 
-\textbf{Glavni tok:}
-\begin{enumerate}[nosep]
-  \item ERP šalje ciljni \texttt{status} (\texttt{UpdateInvoiceStatusRequest} ga validira protiv enuma).
-  \item \texttt{TransitionInvoiceStatus} \textbf{prvo provjeri} je li prijelaz dopušten — ako nije,
-        \texttt{InvalidInvoiceTransitionException} (ništa se ne mijenja).
-  \item Ako ciljno stanje traži UBL (\texttt{queued} + outbound), \textbf{renderira i potpiše prije} promjene
-        statusa — neispravan dokument (XSD/Schematron) baca \texttt{InvoiceValidationException} i račun
-        ostaje u zatečenom stanju.
-  \item Status se promijeni (\texttt{transitionTo}, koji \textbf{ponovno} čuva pravila kao jedini siguran put).
-  \item Pohrani se potpisani UBL (ako je generiran).
-  \item Okidaju se side-effecti prema tablici gore:
-    \begin{itemize}[nosep]
-      \item $\rightarrow$ \texttt{sent} (outbound): \textbf{AS4 dostava} i \textbf{fiskalizacija}.
-    \end{itemize}
-  \item Vraća se \texttt{200 OK} s ažuriranim \texttt{InvoiceResource}.
-\end{enumerate}
+\textbf{Glavni tok:} ERP šalje ciljni \texttt{status} (\texttt{UpdateInvoiceStatusRequest} ga validira
+protiv enuma), a \texttt{TransitionInvoiceStatus} izvodi orkestraciju razrađenu u \ref{sec:tijek}
+(flowchart): provjeri dopuštenost prijelaza, po potrebi renderira i potpiše UBL prije
+promjene statusa, promijeni status (\texttt{transitionTo} kao jedini siguran put) i okine
+side-effecte iz tablice gore ($\rightarrow$ \texttt{sent}, outbound: AS4 dostava i fiskalizacija).
+Na uspjeh vraća \texttt{200 OK} s ažuriranim \texttt{InvoiceResource}.
 
-\textbf{Ključna odluka — decoupling:} ako AS4 dostava ili fiskalizacija bace iznimku,
-\textbf{prijelaz se NE poništava}. Greška se trajno zapiše na pripadni red (\texttt{as4\_messages} /
-\texttt{fiscal\_messages}) i izloži kroz resource, a radnja se ponavlja preko UC-B6/UC-B7.
-
-\textbf{Greške:} nedopušten prijelaz $\rightarrow$ iznimka (\texttt{409}/\texttt{422} ovisno o mapiranju);
-nevaljan UBL $\rightarrow$ \texttt{422} s izvještajem validacije.
+\textbf{Greške i decoupling:} nedopušten prijelaz $\rightarrow$ iznimka (\texttt{409}/\texttt{422}); nevaljan
+UBL (XSD/Schematron) $\rightarrow$ \texttt{422} s izvještajem validacije, status ostaje zatečen. Ako
+\emph{nakon} prijelaza AS4 dostava ili fiskalizacija bace iznimku, prijelaz se ne poništava
+(decoupling, \ref{sec:tijek}) — greška se zapiše na pripadni red i radnja ponavlja preko UC-B6/UC-B7.
 
 \subsubsection{UC-B6 — Fiskalizacija računa (ponovni pokušaj / ručno)}
 
@@ -722,23 +972,23 @@ nevaljan UBL $\rightarrow$ \texttt{422} s izvještajem validacije.
 
 \textbf{Glavni tok:}
 \begin{enumerate}[nosep]
-  \item Odredi se \textbf{reporter OIB} (\texttt{reporterOib()}): za outbound to je dobavljač, za inbound kupac.
+  \item Odredi se reporter OIB (\texttt{reporterOib()}): za outbound to je dobavljač, za inbound kupac.
   \item \textbf{Idempotentnost:} ako već postoji \texttt{accepted} fiskalna poruka za taj reporter $\rightarrow$
         \texttt{SubmissionOutcome::AlreadyTerminal} $\rightarrow$ \texttt{409 Conflict} („already accepted”); ne šalje se ponovno.
-  \item \texttt{FiscalMessageBuilder} izgradi fiskalni XML, koji se \textbf{potpiše} potpisnim vjerodajnicama
+  \item \texttt{FiscalMessageBuilder} izgradi fiskalni XML, koji se potpiše potpisnim vjerodajnicama
         te stranke (\texttt{InvoiceSigner} + \texttt{PartySigningCredentials->forOib}).
-  \item Kreira se / ažurira fiskalna poruka u stanje \textbf{\texttt{requested}} (\texttt{request\_xml}, \texttt{submitted\_at}).
+  \item Kreira se / ažurira fiskalna poruka u stanje \texttt{requested} (\texttt{request\_xml}, \texttt{submitted\_at}).
   \item Poziva se \texttt{FiscalizationService->fiscalize(xml)} (HTTP prema mock CIS-u):
     \begin{itemize}[nosep]
-      \item \textbf{uspjeh} $\rightarrow$ poruka u \textbf{\texttt{accepted}}, spremi se \texttt{service\_message\_id}, \texttt{match\_status},
+      \item \textbf{uspjeh} $\rightarrow$ poruka u \texttt{accepted}, spremi se \texttt{service\_message\_id}, \texttt{match\_status},
             \texttt{settled\_at}; vrati \texttt{200 OK} s resource-om.
-      \item \textbf{greška} (\texttt{FiscalizationServiceException}) $\rightarrow$ poruka u \textbf{\texttt{error}} s \texttt{error\_code}/
+      \item \textbf{greška} (\texttt{FiscalizationServiceException}) $\rightarrow$ poruka u \texttt{error} s \texttt{error\_code}/
             \texttt{error\_message}/\texttt{settled\_at}; baci se \texttt{FiscalizationException}.
     \end{itemize}
 \end{enumerate}
 
 \textbf{Posljedice:} red u \texttt{fiscal\_messages} (stanje \texttt{requested}$\rightarrow$\texttt{accepted}/\texttt{error}). Kod
-ponovnog poziva postojeća se poruka \textbf{ponovno koristi} (upsert), ne stvara se duplikat.
+ponovnog poziva postojeća se poruka ponovno koristi (upsert), ne stvara se duplikat.
 
 \subsubsection{UC-B7 — AS4 dostava primatelju (ponovni pokušaj / ručno)}
 
@@ -756,38 +1006,38 @@ ponovnog poziva postojeća se poruka \textbf{ponovno koristi} (upsert), ne stvar
   \item \textbf{Idempotentnost:} ako već postoji \texttt{acknowledged} izlazna AS4 poruka $\rightarrow$
         \texttt{AlreadyTerminal} $\rightarrow$ \texttt{409 Conflict} („already acknowledged”).
   \item Odrede se \texttt{senderOib} (dobavljač) i \texttt{recipientOib} (kupac); dohvati se pohranjeni
-        \textbf{potpisani UBL} (\texttt{ubl\_xml}). Ako ga nema (npr. fixture bez generiranja) $\rightarrow$
+        potpisani UBL (\texttt{ubl\_xml}). Ako ga nema (npr. fixture bez generiranja) $\rightarrow$
         \texttt{Skipped} (nema što dostaviti).
   \item \texttt{As4DeliveryService->send(ubl, sender, recipient)}:
     \begin{itemize}[nosep]
       \item razriješi primateljev AS4 endpoint (peer discovery — vidi dolje),
-      \item izgradi i potpiše AS4 envelope, pošalje ga HTTP-om, primi \textbf{receipt}.
+      \item izgradi i potpiše AS4 envelope, pošalje ga HTTP-om, primi receipt.
     \end{itemize}
-  \item \textbf{Uspjeh:} kreira se izlazni red u \texttt{as4\_messages} u stanju \textbf{\texttt{acknowledged}}
+  \item \textbf{Uspjeh:} kreira se izlazni red u \texttt{as4\_messages} u stanju \texttt{acknowledged}
         (\texttt{message\_id}, \texttt{ref\_to\_message\_id}, envelope + receipt XML, \texttt{sent\_at}, \texttt{acknowledged\_at}).
   \item \textbf{Greška} (\texttt{As4DeliveryException}):
     \begin{itemize}[nosep]
-      \item ako je envelope već bio izgrađen $\rightarrow$ zapiše se \texttt{as4\_messages} red u stanju \textbf{\texttt{error}}
+      \item ako je envelope već bio izgrađen $\rightarrow$ zapiše se \texttt{as4\_messages} red u stanju \texttt{error}
             (s envelopeom i \texttt{error\_code}/\texttt{error\_message}) radi revizije,
-      \item ako je greška \textbf{prije} gradnje envelopea (npr. nepoznat primatelj) $\rightarrow$ ništa se ne
+      \item ako je greška prije gradnje envelopea (npr. nepoznat primatelj) $\rightarrow$ ništa se ne
             bilježi; baca se \texttt{As4DeliveryFailedException}.
     \end{itemize}
 \end{enumerate}
 
 \textbf{Peer discovery:} primateljev endpoint razrješava \texttt{AmsMpsPeerEndpointResolver} —
-prvo upita \textbf{AMS} koji MPS opslužuje traženi OIB, pa taj \textbf{MPS} za AS4 endpoint
-(usp. UC-A5), uz \textbf{fallback} na statičku \texttt{OIB=URL} mapu iz konfiguracije
+prvo upita AMS koji MPS opslužuje traženi OIB, pa taj MPS za AS4 endpoint
+(usp. UC-A5), uz fallback na statičku \texttt{OIB=URL} mapu iz konfiguracije
 (\texttt{ConfigPeerEndpointResolver}). Tako sustav radi i bez živog AMS-a.
 
 \subsection{C. Ulazni račun}
 
 Druga strana razmjene (kut 3 — posrednik primatelj). Posrednik prima tuđi račun — ili
-\textbf{izravno od ERP-a} (npr. testiranje, isti posrednik na obje strane), ili \textbf{preko AS4}
-od drugog posrednika — validira ga, \textbf{provjerava potpis}, sprema kao \texttt{received} i dalje
-ga obrađuje (dostava kupcu + fiskalizacija sa strane primatelja $\rightarrow$ \textbf{sravnjivanje}).
+izravno od ERP-a (npr. testiranje, isti posrednik na obje strane), ili preko AS4
+od drugog posrednika — validira ga, provjerava potpis, sprema kao \texttt{received} i dalje
+ga obrađuje (dostava kupcu + fiskalizacija sa strane primatelja $\rightarrow$ sravnjivanje).
 
 \begin{leftbar}
-\textbf{Rodno stanje ulaznog računa je \texttt{received}} (ne \texttt{draft}). Dalje ide
+Rodno stanje ulaznog računa je \texttt{received} (ne \texttt{draft}). Dalje ide
 \texttt{received $\rightarrow$ delivered} (ili \texttt{rejected}), gdje \texttt{delivered} znači da je posrednik predao
 račun kupčevom ERP-u i da je kupac sad obvezan fiskalizirati.
 \end{leftbar}
@@ -805,21 +1055,21 @@ račun kupčevom ERP-u i da je kupac sad obvezan fiskalizirati.
 
 \textbf{Glavni tok:}
 \begin{enumerate}[nosep]
-  \item Tijelo zahtjeva je \textbf{sirovi UBL XML}.
+  \item Tijelo zahtjeva je sirovi UBL XML.
   \item \textbf{Validacija sheme:} \texttt{UblValidator->validate()} (XSD + Schematron / HR-CIUS). Neispravan
         dokument $\rightarrow$ \texttt{InvoiceValidationException} $\rightarrow$ \texttt{422}.
   \item \texttt{UblParser->parse()} pretvara XML u \texttt{ParsedInvoice} DTO (stranke, broj, datumi, iznosi, stavke).
   \item \texttt{ReceiveInbound->execute(parsed, rawXml)}:
     \begin{itemize}[nosep]
-      \item \textbf{Provjera potpisa} (\texttt{assertSignatureValid}): dokument mora nositi \textbf{provjerljiv
-            potpis} — digest se podudara (nema neovlaštene izmjene) i certifikat se lančano veže
-            na \textbf{povjerljivi CA} (\texttt{SignatureVerifier} + \texttt{TrustStore}). Neuspjeh $\rightarrow$ \texttt{422}.
-      \item U \textbf{transakciji}: dobavljač se po potrebi \textbf{auto-kreira} (\texttt{firstOrCreate} po OIB-u iz
-            dokumenta), a \textbf{kupac mora već biti registriran} kod ovog posrednika — inače
+      \item \textbf{Provjera potpisa} (\texttt{assertSignatureValid}): dokument mora nositi provjerljiv
+            potpis — digest se podudara (nema neovlaštene izmjene) i certifikat se lančano veže
+            na povjerljivi CA (\texttt{SignatureVerifier} + \texttt{TrustStore}). Neuspjeh $\rightarrow$ \texttt{422}.
+      \item U transakciji: dobavljač se po potrebi auto-kreira (\texttt{firstOrCreate} po OIB-u iz
+            dokumenta), a kupac mora već biti registriran kod ovog posrednika — inače
             \texttt{buyer-not-registered} $\rightarrow$ \texttt{422}.
       \item \textbf{Idempotentnost:} ako već postoji ulazni račun (isti dobavljač + kupac + broj +
             \texttt{inbound}) $\rightarrow$ vrati postojeći (\texttt{200}), bez dupliciranja.
-      \item Inače kreira \texttt{Invoice} sa statusom \textbf{\texttt{received}}, pohrani \textbf{sirovi UBL} verbatim
+      \item Inače kreira \texttt{Invoice} sa statusom \texttt{received}, pohrani sirovi UBL verbatim
             (\texttt{StoreInvoiceUbl}) i kreira stavke iz parsiranog dokumenta.
     \end{itemize}
   \item Vraća \texttt{201 Created} (novi) ili \texttt{200 OK} (već postojao) s \texttt{InvoiceResource}.
@@ -838,21 +1088,21 @@ račun kupčevom ERP-u i da je kupac sad obvezan fiskalizirati.
 \bottomrule
 \end{tabularx}
 
-Ovo je AS4 protokolni endpoint — uvijek vraća \textbf{AS4 envelope} (\texttt{application/soap+xml}),
-bilo \textbf{receipt} (HTTP 200) bilo \textbf{error} (HTTP 400) s \texttt{EBMS:*} kodom.
+Ovo je AS4 protokolni endpoint — uvijek vraća AS4 envelope (\texttt{application/soap+xml}),
+bilo receipt (HTTP 200) bilo error (HTTP 400) s \texttt{EBMS:*} kodom.
 
 \textbf{Glavni tok:}
 \begin{enumerate}[nosep]
-  \item \textbf{Parsiranje + XSD validacija envelopea} (\texttt{as4-envelope.xsd}). Loše oblikovan/nevaljan
+  \item Parsiranje i XSD validacija envelopea (\texttt{as4-envelope.xsd}). Loše oblikovan/nevaljan
         $\rightarrow$ error \texttt{EBMS:0009}.
-  \item \textbf{Ekstrakcija metapodataka} iz zaglavlja: \texttt{messageId}, \texttt{fromOib}, \texttt{toOib}.
-  \item \textbf{Provjera WS-Security potpisa} access pointa na envelopeu (digest + lanac do
+  \item Ekstrakcija metapodataka iz zaglavlja: \texttt{messageId}, \texttt{fromOib}, \texttt{toOib}.
+  \item Provjera WS-Security potpisa access pointa na envelopeu (digest + lanac do
         povjerljivog CA). Neuspjeh $\rightarrow$ \texttt{EBMS:0009}. \textit{(Unutarnji UBL ima vlastiti XAdES potpis koji
         se provjerava kasnije, pri ingestiji.)}
   \item \textbf{Idempotentnost (replay):} ako \texttt{messageId} već postoji $\rightarrow$ vrati spremljeni odgovor
         (receipt ili error), isti HTTP status.
   \item \textbf{Primatelj registriran?} Ako \texttt{toOib} nije naša stranka $\rightarrow$ error \texttt{EBMS:0005}.
-  \item Zapiše se ulazna AS4 poruka (\texttt{as4\_messages}, stanje \textbf{\texttt{received}}).
+  \item Zapiše se ulazna AS4 poruka (\texttt{as4\_messages}, stanje \texttt{received}).
   \item \textbf{Ingestija UBL tereta:}
     \begin{itemize}[nosep]
       \item izvuče se \texttt{ubl:Invoice} iz tijela envelopea,
@@ -860,7 +1110,7 @@ bilo \textbf{receipt} (HTTP 200) bilo \textbf{error} (HTTP 400) s \texttt{EBMS:*
       \item \texttt{UblParser} + \texttt{ReceiveInbound} (isti tok kao UC-C1, uključujući provjeru XAdES potpisa
             i kreiranje ulaznog računa); bilo koja greška $\rightarrow$ \texttt{EBMS:0004}, AS4 poruka u stanje \texttt{error}.
     \end{itemize}
-  \item \textbf{Uspjeh:} izgradi se AS4 \textbf{receipt}, AS4 poruka prelazi u \textbf{\texttt{delivered}} i veže se uz
+  \item \textbf{Uspjeh:} izgradi se AS4 receipt, AS4 poruka prelazi u \texttt{delivered} i veže se uz
         kreirani \texttt{invoice\_id}; vrati se receipt (HTTP 200).
 \end{enumerate}
 
@@ -878,37 +1128,35 @@ poruku označi \texttt{acknowledged} (usp. UC-B7).
 \textbf{Akteri} & ERP kupca / administrator \\
 \textbf{Cilj} & Predati zaprimljeni račun kupcu i fiskalizirati ga sa strane primatelja. \\
 \textbf{Endpoint} & \texttt{PATCH /invoices/\{invoice\}/status} (\texttt{received $\rightarrow$ delivered}) \\
-\textbf{Kod} & \texttt{TransitionInvoiceStatus} $\rightarrow$ \texttt{SubmitFiscalization} (reporter = \textbf{kupac}) \\
+\textbf{Kod} & \texttt{TransitionInvoiceStatus} $\rightarrow$ \texttt{SubmitFiscalization} (reporter = kupac) \\
 \bottomrule
 \end{tabularx}
 
 \textbf{Glavni tok:}
 \begin{enumerate}[nosep]
-  \item Ulazni račun (\texttt{received}) prelazi u \textbf{\texttt{delivered}} — trenutak kad posrednik predaje
+  \item Ulazni račun (\texttt{received}) prelazi u \texttt{delivered} — trenutak kad posrednik predaje
         račun kupčevom ERP-u i kupac postaje obvezan fiskalizirati.
-  \item Side-effect (inbound + \texttt{delivered}): \textbf{fiskalizacija sa strane primatelja}
-        (\texttt{SubmitFiscalization}, reporter OIB = \textbf{kupac}). Isti mehanizam kao UC-B6.
-  \item CIS uparuje kupčevu prijavu s ranijom dobavljačevom (ako postoji) i vraća \textbf{\texttt{match\_status}}:
+  \item Side-effect (inbound + \texttt{delivered}): fiskalizacija sa strane primatelja
+        (\texttt{SubmitFiscalization}, reporter OIB = kupac). Isti mehanizam kao UC-B6.
+  \item CIS uparuje kupčevu prijavu s ranijom dobavljačevom (ako postoji) i vraća \texttt{match\_status}:
     \begin{itemize}[nosep]
-      \item \textbf{\texttt{matched}} — dobavljač je već prijavio iste iznose,
-      \item \textbf{\texttt{mismatch}} — dobavljačeva prijava ima različite iznose,
-      \item \textbf{\texttt{pending}} — dobavljač još nije prijavio.
+      \item \texttt{matched} — dobavljač je već prijavio iste iznose,
+      \item \texttt{mismatch} — dobavljačeva prijava ima različite iznose,
+      \item \texttt{pending} — dobavljač još nije prijavio.
     \end{itemize}
 \end{enumerate}
 
 \textbf{Sravnjivanje (uparivanje) i živi \texttt{match\_status}:} posrednik pri prijavi pamti samo ono
 što mu je CIS tada rekao. Kad kasnije stigne druga strana, CIS interno prebaci oba zapisa u
-\texttt{matched}/\texttt{mismatch}. Da bi API uvijek pokazao \textbf{trenutnu istinu}, \texttt{InvoiceResource} pri
-čitanju \textbf{ponovno pita} CIS (\texttt{FiscalizationService::lookupMatch()}) i pada na pohranjenu
+\texttt{matched}/\texttt{mismatch}. Da bi API uvijek pokazao trenutnu istinu, \texttt{InvoiceResource} pri
+čitanju ponovno pita CIS (\texttt{FiscalizationService::lookupMatch()}) i pada na pohranjenu
 vrijednost ako upit ne uspije. Tako npr. dobavljačev izlazni račun pokaže \texttt{pending $\rightarrow$ matched}
 nakon što kupac fiskalizira, bez ikakvih background jobova ili webhookova.
 
-\begin{leftbar}
 \textbf{Puni round-trip (jedna instanca, oba posrednika):} \texttt{POST /invoices} (draft) $\rightarrow$
 \texttt{$\rightarrow$ queued} (UBL) $\rightarrow$ \texttt{$\rightarrow$ sent} (dobavljačeva fiskalizacija = \texttt{pending} + AS4 dostava) $\rightarrow$
 \texttt{POST /invoices/inbound} ili \texttt{POST /as4/inbox} (ulazni \texttt{received}) $\rightarrow$ \texttt{$\rightarrow$ delivered}
 (kupčeva fiskalizacija) $\rightarrow$ oba računa pokazuju \texttt{matched}.
-\end{leftbar}
 
 % =============================================================================
 \section{Model podataka}
@@ -916,616 +1164,319 @@ nakon što kupac fiskalizira, bez ikakvih background jobova ili webhookova.
 Baza je relacijska, upravljana Eloquent migracijama. Šest domenskih tablica (uz Laravelove
 sistemske: \texttt{users}, \texttt{cache}, \texttt{jobs}).
 
-\subsection{ER dijagram}
+\subsection{Klasni dijagram domene}
+
+Dijagram prikazuje domenske klase, njihove glavne atribute i međusobne odnose na
+konceptualnoj razini — bez baznih tipova, indeksa i drugih implementacijskih
+detalja koji se lako mijenjaju (oni su u tablicama niže). Tipovi stanja
+(\texttt{status}, \texttt{state}, \texttt{direction}, \texttt{vatCategory}, …) su enumi,
+detaljno razrađeni u poglavlju \ref{sec:stanja}.
 
 \begin{center}
+\resizebox{\textwidth}{!}{%
+\renewcommand{\arraystretch}{1.25}%
 \begin{tikzpicture}[
   font=\footnotesize, >={Stealth[]},
-  ent/.style={draw,rounded corners,inner sep=3pt}
+  cls/.style={draw,rounded corners=1pt,inner xsep=0pt,inner ysep=3pt,fill=white},
+  mult/.style={font=\scriptsize,fill=white,inner sep=1pt},
+  rel/.style={thin}
 ]
-\node[ent] (par) {\begin{tabular}{@{}l@{}}\textbf{parties}\\\hline id\\ oib (unique)\\ name\\ \dots adresa, iban\end{tabular}};
-\node[ent,below=2.6cm of par] (inv) {\begin{tabular}{@{}l@{}}\textbf{invoices}\\\hline id\\ supplier\_id (FK)\\ buyer\_id (FK)\\ invoice\_number\\ status / direction\\ net/tax/total\_amount\\ ubl\_xml\_path\end{tabular}};
-\node[ent,left=2.4cm of inv] (cer) {\begin{tabular}{@{}l@{}}\textbf{certificates}\\\hline id\\ party\_id (FK)\\ status\\ serial\_number\\ certificate\_pem\end{tabular}};
-\node[ent,right=2.4cm of inv] (lin) {\begin{tabular}{@{}l@{}}\textbf{invoice\_lines}\\\hline invoice\_id (FK)\\ description\\ quantity\\ unit\_price\\ line\_total\\ vat\_rate / category\\ unit\_code / kpd\_code\end{tabular}};
-\node[ent,below=2.8cm of inv,xshift=-2.4cm] (fis) {\begin{tabular}{@{}l@{}}\textbf{fiscal\_messages}\\\hline invoice\_id (FK)\\ reporter\_oib\\ message\_type\\ state\\ match\_status\end{tabular}};
-\node[ent,below=2.8cm of inv,xshift=2.4cm] (as4) {\begin{tabular}{@{}l@{}}\textbf{as4\_messages}\\\hline invoice\_id (FK, null)\\ direction\\ message\_id (u)\\ state\\ envelope/receipt\end{tabular}};
-\draw[->] (par) -- node[left,font=\scriptsize]{1—*} (cer);
-\draw[->] (par) -- node[right,font=\scriptsize]{1—* (supplier/buyer)} (inv);
-\draw[->] (inv) -- node[above,font=\scriptsize]{1—*} (lin);
-\draw[->] (inv) -- node[left,font=\scriptsize]{1—*} (fis);
-\draw[->] (inv) -- node[right,font=\scriptsize]{1—*} (as4);
-\end{tikzpicture}
+\node[cls] (party) at (0,0.3) {\begin{tabular}{@{\hspace{5pt}}l@{\hspace{5pt}}}\textbf{Party}\\\hline oib : String\\ name : String\\ address : String\\ iban : String\end{tabular}};
+\node[cls] (cert) at (0,-4.2) {\begin{tabular}{@{\hspace{5pt}}l@{\hspace{5pt}}}\textbf{Certificate}\\\hline status : CertificateStatus\\ serialNumber : String\\ subject : String\\ issuer : String\\ validFrom : Date\\ validTo : Date\end{tabular}};
+\node[cls] (inv) at (6.6,0) {\begin{tabular}{@{\hspace{5pt}}l@{\hspace{5pt}}}\textbf{Invoice}\\\hline invoiceNumber : String\\ issueDate : Date\\ dueDate : Date\\ status : InvoiceStatus\\ direction : InvoiceDirection\\ netAmount : Decimal\\ taxAmount : Decimal\\ totalAmount : Decimal\\\hline + transitionTo(target)\\ + canTransitionTo(target) : bool\end{tabular}};
+\node[cls] (line) at (13.0,0) {\begin{tabular}{@{\hspace{5pt}}l@{\hspace{5pt}}}\textbf{InvoiceLine}\\\hline description : String\\ quantity : Decimal\\ unitPrice : Decimal\\ lineTotal : Decimal\\ vatRate : Decimal\\ vatCategory : VatCategory\\ kpdCode : String\end{tabular}};
+\node[cls] (fis) at (4.8,-5.6) {\begin{tabular}{@{\hspace{5pt}}l@{\hspace{5pt}}}\textbf{FiscalMessage}\\\hline reporterOib : String\\ type : FiscalMessageType\\ state : FiscalMessageState\\ matchStatus : MatchStatus\\ serviceMessageId : String\end{tabular}};
+\node[cls] (as4) at (9.9,-5.6) {\begin{tabular}{@{\hspace{5pt}}l@{\hspace{5pt}}}\textbf{As4Message}\\\hline direction : As4MessageDirection\\ messageId : String\\ state : As4MessageState\\ envelope : XML\\ receipt : XML\end{tabular}};
+
+% Party — Invoice (asocijacija, dvije uloge)
+\draw[rel] (party.east) -- node[mult,pos=0.1]{1} node[mult,pos=0.93]{*} node[above,font=\scriptsize,pos=0.55]{«supplier»} (inv.north west);
+\draw[rel] (party.south east) -- node[mult,pos=0.1]{1} node[mult,pos=0.93]{*} node[below,font=\scriptsize,pos=0.5]{«buyer»} (inv.west);
+% Party ◆— Certificate (kompozicija)
+\draw[rel,{Diamond[length=2.6mm,width=1.9mm]}-] (party.south) -- node[mult,pos=0.14]{1} node[mult,pos=0.88]{*} (cert.north);
+% Invoice ◆— InvoiceLine (kompozicija)
+\draw[rel,{Diamond[length=2.6mm,width=1.9mm]}-] (inv.east) -- node[mult,pos=0.1]{1} node[mult,pos=0.92]{1..*} (line.west);
+% Invoice — FiscalMessage (asocijacija)
+\draw[rel] (inv.south) -- node[mult,pos=0.12]{1} node[mult,pos=0.9]{*} (fis.north);
+% Invoice — As4Message (asocijacija, 0..1)
+\draw[rel] (inv.south) -- node[mult,pos=0.12]{0..1} node[mult,pos=0.9]{*} (as4.north);
+\end{tikzpicture}%
+}
 \end{center}
 
-\textbf{Relacije (Eloquent):}
+\textbf{Odnosi i zašto baš takvi:}
 \begin{itemize}[nosep]
-  \item \texttt{Party} 1—* \texttt{Invoice} (dvije veze: \texttt{supplier\_id}, \texttt{buyer\_id})
-  \item \texttt{Party} 1—* \texttt{Certificate} (cascade delete)
-  \item \texttt{Invoice} 1—* \texttt{InvoiceLine} (cascade delete)
-  \item \texttt{Invoice} 1—* \texttt{FiscalMessage}
-  \item \texttt{Invoice} 1—* \texttt{As4Message} (FK nullable — error prije vezivanja računa)
+  \item \textbf{Kompozicija} ($\Diamond$) \texttt{Invoice}—\texttt{InvoiceLine} i \texttt{Party}—\texttt{Certificate}:
+        stavke i certifikati ne postoje samostalno bez svog vlasnika — vezani su uz njegov
+        životni ciklus i brišu se kaskadno. Otud puni dijamant na strani cjeline.
+  \item \textbf{Asocijacija} \texttt{Party}—\texttt{Invoice}, u dvije uloge
+        (\emph{supplier}, \emph{buyer}): stranke žive neovisno o pojedinom računu, koji ih samo
+        referencira. Ista \texttt{Party} može biti dobavljač na jednom, a kupac na drugom računu.
+  \item \texttt{Invoice}—\texttt{FiscalMessage} i \texttt{Invoice}—\texttt{As4Message} su asocijacije
+        vezane uz tijek računa. \texttt{As4Message} na strani računa ima višestrukost \texttt{0..1}
+        jer poruka može nastati i \emph{prije} vezivanja uz račun (greška u dostavi prije razrješenja).
+  \item \textbf{Bez nasljeđivanja:} varijante stanja i tipova modelirane su enumima
+        (poglavlje \ref{sec:stanja}), a ne potklasama — stanje je podatak, ne tip, pa nema hijerarhije klasa.
 \end{itemize}
 
-\subsection{\texttt{parties} — stranke}
+\subsection{Tablice i ključne invarijante}
 
-\begin{tabularx}{\textwidth}{@{}llY@{}}
+Šest domenskih tablica prati klase iz dijagrama (uz Laravelove sistemske \texttt{users},
+\texttt{cache}, \texttt{jobs}). Atributi su vidljivi na dijagramu; ovdje su istaknute samo
+invarijante na razini baze koje se iz njega ne vide:
+
+\begin{tabularx}{\textwidth}{@{}lY@{}}
 \toprule
-\textbf{Stupac} & \textbf{Tip} & \textbf{Napomena} \\
+\textbf{Tablica} & \textbf{Ključno ograničenje / napomena} \\
 \midrule
-\texttt{id} & bigint PK & \\
-\texttt{oib} & string(11) \textbf{unique} & identifikator subjekta \\
-\texttt{name} & string & naziv \\
-\texttt{is\_vat\_registered} & bool (default false) & obveznik PDV-a \\
-\texttt{address\_line}, \texttt{city} & string & adresa \\
-\texttt{postcode} & string(5) & poštanski broj \\
-\texttt{country\_code} & string(2), default \texttt{HR} & ISO 3166-1 alpha-2 \\
-\texttt{iban} & string, nullable & \\
-\texttt{timestamps} & & \\
-\bottomrule
-\end{tabularx}
-
-\subsection{\texttt{invoices} — računi}
-
-\begin{tabularx}{\textwidth}{@{}llY@{}}
-\toprule
-\textbf{Stupac} & \textbf{Tip} & \textbf{Napomena} \\
-\midrule
-\texttt{id} & bigint PK & \\
-\texttt{supplier\_id} & FK $\rightarrow$ parties & dobavljač \\
-\texttt{buyer\_id} & FK $\rightarrow$ parties & kupac \\
-\texttt{invoice\_number} & string & jedinstven \textbf{po dobavljaču} (validacija) \\
-\texttt{issue\_date} & date & datum izdavanja \\
-\texttt{due\_date} & date, nullable & dospijeće \\
-\texttt{status} & string & \texttt{InvoiceStatus} enum \\
-\texttt{direction} & string & \texttt{InvoiceDirection} (outbound/inbound) \\
-\texttt{currency} & string(3), default \texttt{EUR} & \\
-\texttt{net\_amount}, \texttt{tax\_amount}, \texttt{total\_amount} & decimal(12,2) & izračunato na serveru \\
-\texttt{ubl\_xml\_path} & string, nullable & \textbf{putanja} do UBL-a na disku (ne sadržaj) \\
-\texttt{timestamps} & & \\
-\bottomrule
-\end{tabularx}
-
-\begin{leftbar}
-\texttt{ubl\_xml} (sadržaj) nije stupac — to je read-only accessor koji streama dokument s diska
-po \texttt{ubl\_xml\_path} (vidi UC-B4 i napomenu o byte-fidelity u poglavlju 7).
-\end{leftbar}
-
-\subsection{\texttt{invoice\_lines} — stavke računa}
-
-\begin{tabularx}{\textwidth}{@{}llY@{}}
-\toprule
-\textbf{Stupac} & \textbf{Tip} & \textbf{Napomena} \\
-\midrule
-\texttt{id} & bigint PK & \\
-\texttt{invoice\_id} & FK $\rightarrow$ invoices (cascade) & \\
-\texttt{description} & string & \\
-\texttt{quantity} & decimal(10,3) & \\
-\texttt{unit\_price} & decimal(12,2) & \\
-\texttt{line\_total} & decimal(12,2) & \texttt{quantity × unit\_price} \\
-\texttt{vat\_rate} & decimal(5,2) & stopa \% \\
-\texttt{vat\_category} & string(1) & \texttt{VatCategory} (\texttt{S}/\texttt{Z}/\texttt{E}) \\
-\texttt{unit\_code} & string(3), default \texttt{H87} & jedinica mjere (UN/ECE) \\
-\texttt{kpd\_code} & string(6), nullable & KPD 2025 (obavezno na ulazu API-ja) \\
-\bottomrule
-\end{tabularx}
-
-\subsection{\texttt{fiscal\_messages} — fiskalne poruke (CIS)}
-
-\begin{tabularx}{\textwidth}{@{}llY@{}}
-\toprule
-\textbf{Stupac} & \textbf{Tip} & \textbf{Napomena} \\
-\midrule
-\texttt{id} & bigint PK & \\
-\texttt{invoice\_id} & FK $\rightarrow$ invoices & \\
-\texttt{reporter\_oib} & string(11) & tko prijavljuje (dobavljač ili kupac) \\
-\texttt{message\_type} & string & \texttt{FiscalMessageType} (\texttt{fis}) \\
-\texttt{state} & string & \texttt{FiscalMessageState} (requested/accepted/error) \\
-\texttt{service\_message\_id} & string, nullable & identifikator poruke koji vraća CIS \\
-\texttt{match\_status} & string, nullable & \texttt{MatchStatus} (pending/matched/mismatch) \\
-\texttt{error\_code}, \texttt{error\_message} & string/text, nullable & \\
-\texttt{request\_xml}, \texttt{response\_xml} & text, nullable & revizijski trag \\
-\texttt{submitted\_at}, \texttt{settled\_at} & timestamp, nullable & \\
-\textbf{unique} & & \texttt{(invoice\_id, reporter\_oib, message\_type)} \\
-\bottomrule
-\end{tabularx}
-
-\begin{leftbar}
-\textbf{Unique ključ} osigurava da svaka strana (reporter) ima točno jednu FIS poruku po
-računu — temelj idempotentnog upserta iz UC-B6.
-\end{leftbar}
-
-\subsection{\texttt{as4\_messages} — AS4 poruke (transport)}
-
-\begin{tabularx}{\textwidth}{@{}llY@{}}
-\toprule
-\textbf{Stupac} & \textbf{Tip} & \textbf{Napomena} \\
-\midrule
-\texttt{id} & bigint PK & \\
-\texttt{invoice\_id} & FK $\rightarrow$ invoices, \textbf{nullable} & null kod greške prije vezivanja \\
-\texttt{direction} & string & \texttt{As4MessageDirection} (outbound/inbound) \\
-\texttt{message\_id} & string(64) \textbf{unique} & ebMS MessageId \\
-\texttt{ref\_to\_message\_id} & string(64), nullable & referenca na receipt \\
-\texttt{from\_oib}, \texttt{to\_oib} & string(11) & \\
-\texttt{state} & string & \texttt{As4MessageState} \\
-\texttt{error\_code}, \texttt{error\_message} & string/text, nullable & \\
-\texttt{envelope\_xml} & text & poslani/primljeni envelope \\
-\texttt{receipt\_xml} & text, nullable & receipt/error envelope \\
-\texttt{sent\_at}, \texttt{acknowledged\_at}, \texttt{received\_at} & timestamp, nullable & \\
-\bottomrule
-\end{tabularx}
-
-\begin{leftbar}
-\texttt{message\_id} je \textbf{unique} $\rightarrow$ temelj replay-idempotentnosti AS4 prijema (UC-C2).
-\end{leftbar}
-
-\subsection{\texttt{certificates} — potpisni certifikati stranaka}
-
-\begin{tabularx}{\textwidth}{@{}llY@{}}
-\toprule
-\textbf{Stupac} & \textbf{Tip} & \textbf{Napomena} \\
-\midrule
-\texttt{id} & bigint PK & \\
-\texttt{party\_id} & FK $\rightarrow$ parties (cascade) & \\
-\texttt{status} & string, default \texttt{active} & \texttt{CertificateStatus} (active/superseded/revoked) \\
-\texttt{serial\_number} & string & serijski broj X.509 \\
-\texttt{subject}, \texttt{issuer} & string & \\
-\texttt{valid\_from}, \texttt{valid\_to} & timestamp & rok valjanosti \\
-\texttt{certificate\_pem} & text & \textbf{javni} certifikat (sigurno za pohranu/izlaz) \\
-\texttt{private\_key\_path} & string & putanja do ključa na PKI disku (\textbf{nikad} se ne serijalizira) \\
-\texttt{fingerprint} & string(64), \textbf{index} & \\
-\textbf{index} & & \texttt{(party\_id, status)} — pogon „single active” invarijante \\
+\texttt{parties} & \texttt{oib} je unique; \texttt{country\_code} default \texttt{HR}. \\
+\texttt{invoices} & Iznosi (\texttt{net}/\texttt{tax}/\texttt{total}) izračunati na serveru (decimal, bcmath), \texttt{currency} default \texttt{EUR}. \texttt{ubl\_xml\_path} drži putanju do UBL-a na disku — sadržaj \texttt{ubl\_xml} je read-only accessor koji streama dokument verbatim (byte-fidelity; vidi UC-B4 i \ref{sec:pki}). \\
+\texttt{invoice\_lines} & FK na \texttt{invoices} (cascade); \texttt{kpd\_code} 6 znamenki, \texttt{unit\_code} default \texttt{H87}. \\
+\texttt{fiscal\_messages} & unique \texttt{(invoice\_id, reporter\_oib, message\_type)} — svaka strana ima točno jednu FIS poruku po računu (temelj idempotentnog upserta, UC-B6); \texttt{request}/\texttt{response\_xml} su revizijski trag. \\
+\texttt{as4\_messages} & \texttt{message\_id} unique $\rightarrow$ replay-idempotentnost prijema (UC-C2); \texttt{invoice\_id} nullable (poruka može nastati prije vezivanja uz račun). \\
+\texttt{certificates} & FK na \texttt{parties} (cascade); index \texttt{(party\_id, status)} pogoni „single-active” invarijantu. \texttt{certificate\_pem} je javni; \texttt{private\_key\_path} pokazuje na ključ na PKI disku i nikad se ne serijalizira. \\
 \bottomrule
 \end{tabularx}
 
 % =============================================================================
-\section{API referenca}
+\section{Korisničke upute}
 
-Sve rute imaju prefiks \texttt{/api}. Format je JSON, osim UBL/AS4 endpointa koji koriste XML.
-Greške validacije vraćaju standardni Laravel \texttt{422} oblik (vidi 6.14).
+eRakun namjerno nema grafičko sučelje — sustav je REST API koji opslužuje
+strojne klijente (ERP-ove i druge posrednike). Za potrebe demonstracije i ovih uputa
+kao sučelje (prototip) koristimo Bruno — open-source, offline API
+klijent. Bruno kolekcija živi u repozitoriju (\texttt{bruno/eRakun/}) kao plain-text
+\texttt{.bru} datoteke, pa je verzionirana i čitljiva u diffu, a istovremeno služi kao
+ručno upravljivo sučelje nad svakim endpointom. Upute u nastavku prate kanonski
+tijek izrade i razmjene jednog eRačuna, korak po korak.
 
 \begin{leftbar}
-OIB-ovi u primjerima su \textbf{ilustrativni}; u praksi moraju proći kontrolnu znamenku (ISO 7064).
+\textbf{O snimkama zaslona.} Svaki korak ima mjesto za snimku Bruno sučelja
+(zahtjev + odgovor). U izvoru su to \texttt{\textbackslash screenshot\{\dots\}}
+rezervirana mjesta; kad je snimka spremna, zamijeni poziv s npr.\\
+\texttt{\textbackslash includegraphics[width=.86\textbackslash textwidth]\{slike/01-create-party.png\}}.
 \end{leftbar}
 
-\subsection*{Pregled endpointa}
+\subsection{Sučelje: Bruno API kolekcija}
 
-{\footnotesize\setlength{\tabcolsep}{4pt}
-\begin{tabularx}{\textwidth}{@{}l l >{\raggedright\arraybackslash}X l@{}}
-\toprule
-\textbf{Metoda} & \textbf{Putanja} & \textbf{Opis} & \textbf{Use case} \\
-\midrule
-\texttt{POST} & \texttt{/api/parties} & Registracija stranke & UC-A1 \\
-\texttt{GET} & \texttt{/api/parties/\{party\}} & Dohvat stranke & UC-A2 \\
-\texttt{GET} & \texttt{/api/parties/\{party\}/certificates} & Lista certifikata & UC-A4 \\
-\texttt{POST} & \texttt{/api/parties/\{party\}/certificates} & Učitavanje certifikata & UC-A3 \\
-\texttt{GET} & \texttt{/api/parties/\{party\}/certificates/\{certificate\}} & Dohvat certifikata & UC-A4 \\
-\texttt{DELETE} & \texttt{/api/parties/\{party\}/certificates/\{certificate\}} & Opoziv certifikata & UC-A4 \\
-\texttt{GET} & \texttt{/api/mps/participants/\{oib\}} & MPS discovery & UC-A5 \\
-\texttt{POST} & \texttt{/api/invoices} & Kreiranje izlaznog računa & UC-B1 \\
-\texttt{GET} & \texttt{/api/invoices} & Lista/filtriranje računa & UC-B2 \\
-\texttt{GET} & \texttt{/api/invoices/\{invoice\}} & Dohvat računa & UC-B3 \\
-\texttt{GET} & \texttt{/api/invoices/\{invoice\}/xml} & UBL XML računa & UC-B4 \\
-\texttt{PATCH} & \texttt{/api/invoices/\{invoice\}/status} & Prijelaz statusa & UC-B5 / UC-C3 \\
-\texttt{POST} & \texttt{/api/invoices/\{invoice\}/fiscalize} & Fiskalizacija & UC-B6 \\
-\texttt{POST} & \texttt{/api/invoices/\{invoice\}/deliver} & AS4 dostava & UC-B7 \\
-\texttt{POST} & \texttt{/api/invoices/inbound} & Prijem računa iz ERP-a & UC-C1 \\
-\texttt{POST} & \texttt{/api/as4/inbox} & Prijem AS4 poruke & UC-C2 \\
-\bottomrule
-\end{tabularx}
-}
-
-\subsection{\texttt{POST /api/parties} — registracija stranke}
-
-\textbf{Zahtjev:}
-\begin{Verbatim}
-{
-  "oib": "12345678903",
-  "name": "Dobavljač d.o.o.",
-  "is_vat_registered": true,
-  "address_line": "Ilica 1",
-  "city": "Zagreb",
-  "postcode": "10000",
-  "country_code": "HR",
-  "iban": "HR1210010051863000160"
-}
-\end{Verbatim}
-
-\textbf{Odgovor — \texttt{201 Created}:}
-\begin{Verbatim}
-{
-  "data": {
-    "id": 1,
-    "oib": "12345678903",
-    "name": "Dobavljač d.o.o.",
-    "is_vat_registered": true,
-    "address_line": "Ilica 1",
-    "city": "Zagreb",
-    "postcode": "10000",
-    "country_code": "HR",
-    "iban": "HR1210010051863000160"
-  }
-}
-\end{Verbatim}
-
-\subsection{\texttt{GET /api/parties/\{party\}} — dohvat stranke}
-
-\textbf{Odgovor — \texttt{200 OK}:} isti \texttt{data} oblik kao gore. Nepostojeća stranka $\rightarrow$ \texttt{404}.
-
-\subsection{\texttt{POST /api/parties/\{party\}/certificates} — učitavanje certifikata}
-
-Dva načina slanja (vidi UC-A3):
-
-\textbf{(a) PEM string:}
-\begin{Verbatim}
-{
-  "certificate_pem": "-----BEGIN CERTIFICATE-----\nMIID...\n-----END CERTIFICATE-----\n-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----",
-  "password": null
-}
-\end{Verbatim}
-
-\textbf{(b) PKCS\#12 datoteka:} \texttt{multipart/form-data} s poljem \texttt{certificate} (\texttt{.p12}/\texttt{.pfx}) i
-opcionalnim \texttt{password}.
-
-\textbf{Odgovor — \texttt{201 Created}:}
-\begin{Verbatim}
-{
-  "data": {
-    "id": 5,
-    "party_id": 1,
-    "status": "active",
-    "serial_number": "0A1B2C3D",
-    "subject": "CN=Dobavljač d.o.o., O=..., OIB=12345678903",
-    "issuer": "CN=eRakun Test FINA CA",
-    "valid_from": "2026-01-01T00:00:00.000000Z",
-    "valid_to": "2027-01-01T00:00:00.000000Z",
-    "fingerprint": "9f2a...c7",
-    "certificate_pem": "-----BEGIN CERTIFICATE-----\nMIID...\n-----END CERTIFICATE-----"
-  }
-}
-\end{Verbatim}
-\begin{leftbar}
-Privatni ključ \textbf{nije} dio odgovora. Greška (kriva lozinka / neispravan materijal) $\rightarrow$ \texttt{422}.
-\end{leftbar}
-
-\subsection{\texttt{GET /api/parties/\{party\}/certificates} — lista certifikata}
-
-\textbf{Odgovor — \texttt{200 OK}:} \texttt{\{ "data": [ \{ …certifikat… \}, … ] \}} (najnoviji prvi).
-
-\subsection{\texttt{DELETE /api/parties/\{party\}/certificates/\{certificate\}} — opoziv}
-
-\textbf{Odgovor — \texttt{204 No Content}.} Status certifikata postaje \texttt{revoked} (red se ne briše).
-
-\subsection{\texttt{GET /api/mps/participants/\{oib\}} — MPS discovery}
-
-\textbf{Odgovor — \texttt{200 OK}:}
-\begin{Verbatim}
-{
-  "oib": "98765432106",
-  "as4_endpoint": "https://receiver.erakun.test/api/as4/inbox"
-}
-\end{Verbatim}
-\begin{leftbar}
-Ako OIB nije među opsluženim strankama $\rightarrow$ \texttt{404}.
-\end{leftbar}
-
-\subsection{\texttt{POST /api/invoices} — kreiranje izlaznog računa}
-
-\textbf{Zahtjev:}
-\begin{Verbatim}
-{
-  "supplier_oib": "12345678903",
-  "buyer_oib": "98765432106",
-  "invoice_number": "2026-001",
-  "issue_date": "2026-06-08",
-  "due_date": "2026-06-23",
-  "direction": "outbound",
-  "currency": "EUR",
-  "lines": [
-    {
-      "description": "Konzultantske usluge",
-      "quantity": 10,
-      "unit_price": 100.00,
-      "vat_rate": 25,
-      "vat_category": "S",
-      "unit_code": "H87",
-      "kpd_code": "620100"
-    }
-  ]
-}
-\end{Verbatim}
-
-\textbf{Odgovor — \texttt{201 Created}:} (puni \texttt{InvoiceResource}, vidi 6.9)
-Iznosi (\texttt{net\_amount} 1000.00, \texttt{tax\_amount} 250.00, \texttt{total\_amount} 1250.00) računaju se na serveru.
-
-\subsection{\texttt{GET /api/invoices} — lista i filtriranje}
-
-Filteri (svi opcionalni): \texttt{status}, \texttt{direction}, \texttt{supplier\_oib}, \texttt{buyer\_oib}. Paginirano.
-
-\textbf{Odgovor — \texttt{200 OK}:}
-\begin{Verbatim}
-{
-  "data": [ { "id": 1, "invoice_number": "2026-001", "status": "sent", "...": "..." } ],
-  "links": { "first": "...", "last": "...", "prev": null, "next": null },
-  "meta": { "current_page": 1, "per_page": 15, "total": 1 }
-}
-\end{Verbatim}
-
-\subsection{\texttt{GET /api/invoices/\{invoice\}} — dohvat računa}
-
-\textbf{Odgovor — \texttt{200 OK}} (puni oblik s \texttt{delivery} i \texttt{fiscalization} blokovima):
-\begin{Verbatim}
-{
-  "data": {
-    "id": 1,
-    "invoice_number": "2026-001",
-    "supplier": { "id": 1, "oib": "12345678903", "name": "Dobavljač d.o.o.", "...": "..." },
-    "buyer": { "id": 2, "oib": "98765432106", "name": "Kupac d.o.o.", "...": "..." },
-    "issue_date": "2026-06-08",
-    "due_date": "2026-06-23",
-    "status": "sent",
-    "direction": "outbound",
-    "currency": "EUR",
-    "net_amount": "1000.00",
-    "tax_amount": "250.00",
-    "total_amount": "1250.00",
-    "lines": [
-      {
-        "description": "Konzultantske usluge",
-        "quantity": "10.000",
-        "unit_price": "100.00",
-        "line_total": "1000.00",
-        "vat_rate": "25.00",
-        "vat_category": "S",
-        "unit_code": "H87",
-        "kpd_code": "620100"
-      }
-    ],
-    "delivery": {
-      "state": "acknowledged",
-      "message_id": "a1b2...@erakun",
-      "peer_message_id": "c3d4...@erakun",
-      "sent_at": "2026-06-08T10:00:00Z",
-      "acknowledged_at": "2026-06-08T10:00:01Z",
-      "error": null
-    },
-    "fiscalization": {
-      "state": "accepted",
-      "service_message_id": "FIS-2026-0001",
-      "match_status": "matched",
-      "error_code": null,
-      "error_message": null,
-      "submitted_at": "2026-06-08T10:00:00Z",
-      "settled_at": "2026-06-08T10:00:01Z"
-    }
-  }
-}
-\end{Verbatim}
-\begin{leftbar}
-\texttt{delivery} i \texttt{fiscalization} su \texttt{null} dok pripadne poruke ne postoje. \texttt{match\_status} se
-dohvaća uživo iz CIS-a pri čitanju (vidi UC-C3).
-\end{leftbar}
-
-\subsection{\texttt{GET /api/invoices/\{invoice\}/xml} — UBL XML}
-
-\textbf{Odgovor — \texttt{200 OK}}, \texttt{Content-Type: application/xml} — potpisani UBL (ako je pohranjen)
-ili nepotpisani draft (za \texttt{draft} + \texttt{outbound}). Inače \texttt{404}.
-
-\subsection{\texttt{PATCH /api/invoices/\{invoice\}/status} — prijelaz statusa}
-
-\textbf{Zahtjev:}
-\begin{Verbatim}
-{ "status": "queued" }
-\end{Verbatim}
-
-\textbf{Odgovor — \texttt{200 OK}:} ažurirani \texttt{InvoiceResource}. Nedopušten prijelaz $\rightarrow$ greška;
-nevaljan UBL pri \texttt{$\rightarrow$ queued} $\rightarrow$ \texttt{422} s izvještajem validacije.
-
-\subsection{Fiskalizacija i dostava (ručno / retry)}
-
-\texttt{POST /api/invoices/\{invoice\}/fiscalize} i \texttt{POST /api/invoices/\{invoice\}/deliver}:
-
-\begin{itemize}[nosep]
-  \item \textbf{\texttt{200 OK}} — ažurirani \texttt{InvoiceResource} (vidi \texttt{fiscalization} / \texttt{delivery} blok).
-  \item \textbf{\texttt{409 Conflict}} — radnja je već u terminalnom stanju:
-\end{itemize}
-\begin{Verbatim}
-{ "message": "Fiscal message is already accepted." }
-\end{Verbatim}
-\begin{Verbatim}
-{ "message": "AS4 delivery is already acknowledged." }
-\end{Verbatim}
-
-\subsection{Prijem računa i AS4}
-
-\begin{itemize}[nosep]
-  \item \texttt{POST /api/invoices/inbound} — tijelo je \textbf{sirovi UBL XML} (\texttt{Content-Type: application/xml}).
-        Odgovor \texttt{201} (novi) / \texttt{200} (već postojao) s \texttt{InvoiceResource}; nevaljan UBL ili potpis $\rightarrow$ \texttt{422}.
-  \item \texttt{POST /api/as4/inbox} — tijelo je \textbf{AS4/SOAP envelope}. Odgovor je AS4 envelope
-        (\texttt{application/soap+xml}): receipt (\texttt{200}) ili error (\texttt{400}, s \texttt{EBMS:*} kodom).
-\end{itemize}
-
-\subsection{Oblik validacijske greške}
-
-Standardni Laravel \texttt{422 Unprocessable Entity}:
-\begin{Verbatim}
-{
-  "message": "The buyer oib field must be different from supplier oib.",
-  "errors": {
-    "buyer_oib": ["The buyer oib field must be different from supplier oib."],
-    "lines.0.kpd_code": ["The lines.0.kpd_code field must be 6 characters."]
-  }
-}
-\end{Verbatim}
-
-% =============================================================================
-\section{Sigurnost i PKI}
-
-Potpisivanje i verifikacija u projektu su \textbf{prava kriptografija} (RSA-2048, SHA-256,
-ispravne X.509 ekstenzije) — jedino su \textbf{korijeni povjerenja samo-generirani} (testni PKI)
-umjesto pravih FINA/OpenPEPPOL korijena. Koriste se OpenSSL i \texttt{robrichards/xmlseclibs}.
-
-\subsection{Dva sloja potpisa (kao u PEPPOL-u)}
-
-Sustav vjerno odražava PEPPOL podjelu na \textbf{dokumentni} i \textbf{transportni} sloj, sa
-\textbf{dva odvojena certifikata}:
-
-\begin{tabularx}{\textwidth}{@{}lYYll@{}}
-\toprule
-\textbf{Sloj} & \textbf{Što potpisuje} & \textbf{Čime} & \textbf{Standard} & \textbf{Kod} \\
-\midrule
-\textbf{Dokumentni} & UBL račun (enveloped) & certifikat \textbf{stranke} (FINA-like) & XAdES-B & \texttt{InvoiceSigner} \\
-\textbf{Transportni} & AS4 envelope (payload) & certifikat \textbf{access pointa} (PEPPOL-like) & WS-Security & \texttt{As4EnvelopeSigner} \\
-\bottomrule
-\end{tabularx}
-
-Ulazni dokument tako nosi \textbf{dva potpisa}: WS-Security potpis access pointa na envelopeu
-(provjerava se prvi, pri prijemu) i XAdES potpis stranke unutar UBL-a (provjerava se kasnije,
-pri ingestiji) — usp. UC-C2.
-
-\subsection{Testni PKI (\texttt{TestPkiGenerator})}
-
-Hijerarhija koja se generira komandom \texttt{php artisan pki:generate}:
-
-\begin{center}
-\begin{tikzpicture}[
-  font=\small, >={Stealth[]},
-  ca/.style={draw,rounded corners,align=center,minimum width=4cm},
-  leaf/.style={draw,align=center,minimum width=4cm}
-]
-\node[ca] (fina) {FINA-like root CA\\\texttt{(ca/fina.crt)}};
-\node[ca,right=2cm of fina] (pep) {OpenPEPPOL-like root CA\\\texttt{(ca/peppol.crt)}};
-\node[leaf,below=1.4cm of fina] (party) {certifikati stranaka\\(CN = OIB stranke)\\[2pt]\scriptsize— dokumentni potpis};
-\node[leaf,below=1.4cm of pep] (ap) {certifikat access pointa\\\texttt{(ap/ap.crt)}\\[2pt]\scriptsize— transportni potpis};
-\draw[->] (fina) -- (party);
-\draw[->] (pep) -- (ap);
-\end{tikzpicture}
-\end{center}
-
-\begin{itemize}[nosep]
-  \item \textbf{Dvije korijenske CA} (FINA-like i PEPPOL-like) — samopotpisane, RSA-2048, SHA-256,
-        \texttt{v3\_ca} ekstenzije, valjanost $\sim$10 god (\texttt{pki.ca\_days}).
-  \item \textbf{Certifikat stranke} izdaje se s \textbf{FINA-like CA}; \textbf{CN = OIB} stranke (kvalificirani
-        certifikat vezan uz porezni broj, kao prava FINA).
-  \item \textbf{Certifikat access pointa} izdaje se s \textbf{PEPPOL-like CA}.
-  \item \textbf{Idempotentno:} ponovno pokretanje ne dira postojeći materijal (osim \texttt{--force}), da se
-        ne invalidiraju ključevi već ugrađeni u izdane certifikate.
-  \item Privatni ključevi pišu se na \textbf{gitignoran PKI disk} (\texttt{storage/app/private/pki}).
-\end{itemize}
-
-\textbf{Komanda \texttt{pki:generate}:}
-\begin{itemize}[nosep]
-  \item bez opcija $\rightarrow$ osigura da CA i AP certifikat postoje;
-  \item \texttt{--force} $\rightarrow$ regeneriraj CA i AP;
-  \item \texttt{--parties} $\rightarrow$ izdaj aktivni potpisni certifikat svakoj stranci koja ga nema.
-\end{itemize}
-
-\subsection{Potpisivanje UBL-a (\texttt{InvoiceSigner}, XAdES-B)}
-
-Proizvodi \textbf{enveloped XAdES-B} potpis unutar \texttt{sac:SignatureInformation} dokumenta.
-Potpis nosi \textbf{dvije reference}:
-
+\textbf{Otvaranje kolekcije:}
 \begin{enumerate}[nosep]
-  \item \textbf{Referenca na cijeli dokument} (\texttt{URI=""}, enveloped transform) — SHA-256 nad
-        exclusive-C14N kanonikalizacijom (potpis se izuzme prije računanja digesta).
-  \item \textbf{Referenca na XAdES \texttt{SignedProperties}} (vezana po \texttt{Id}) — sadrži \texttt{SigningTime} i
-        digest + issuer/serial potpisnog certifikata (\texttt{SigningCertificate}).
+  \item Instaliraj Bruno (\texttt{brew install --cask bruno} ili s \texttt{usebruno.com}).
+  \item \textbf{Open Collection} $\rightarrow$ odaberi mapu \texttt{bruno/eRakun}.
+  \item Gore desno odaberi okolinu \textbf{Local}.
 \end{enumerate}
 
-\texttt{xmlseclibs} ne gradi XAdES ni drugu referencu sam, pa se \texttt{QualifyingProperties}/
-\texttt{SignedProperties} ručno grade i dodaju kao \texttt{ds:Object} prije potpisivanja. Potpisni
-algoritam je \textbf{RSA-SHA256} nad exclusive-C14N \texttt{SignedInfo}; certifikat se \textbf{ugrađuje u
-\texttt{KeyInfo}} kako bi ga verifikator mogao iskoristiti bez bočnog kanala.
+Okolina \textbf{Local} drži zajedničke varijable koje zahtjevi dijele:
+
+\begin{tabularx}{\textwidth}{@{}lY@{}}
+\toprule
+\textbf{Varijabla} & \textbf{Zadana vrijednost / uloga} \\
+\midrule
+\texttt{base\_url} & \texttt{http://localhost:8000/api} \\
+\texttt{supplier\_oib} & \texttt{12345678903} — OIB dobavljača \\
+\texttt{buyer\_oib} & \texttt{98765432106} — OIB kupca \\
+\texttt{certificate\_id} & popunjava se automatski nakon \emph{Upload Certificate} \\
+\texttt{invoice\_id} & popunjava se automatski nakon \emph{Create Invoice} \\
+\bottomrule
+\end{tabularx}
+
+Stranke se u rutama adresiraju po OIB-u (\texttt{/parties/\{oib\}}), a računi po
+internom \texttt{id} (\texttt{/invoices/\{id\}}) koji se sprema u \texttt{invoice\_id} skriptom
+nakon kreiranja.
+
+\screenshot{Bruno glavni prozor — kolekcija eRakun, odabrana okolina Local}
+
+\subsection{Priprema okoline}
+
+Prije prvog zahtjeva pokreni poslužitelj i pripremi bazu te testni PKI:
+
+\begin{Verbatim}
+php artisan migrate                   # ili migrate:fresh za čistu bazu
+php artisan pki:generate --parties    # izda potpisne certifikate subjektima
+php artisan serve                     # http://localhost:8000
+\end{Verbatim}
 
 \begin{leftbar}
-\textbf{Byte-fidelity:} \texttt{formatOutput = false} — potpis je nad in-memory DOM-om, pa se bajtovi
-emitiraju verbatim. Naknadno „uljepšavanje” ubacilo bi bjeline koje digesti nisu vidjeli i
-tiho slomilo verifikaciju. (Vidi i UC-B4.)
+\texttt{pki:generate --parties} je najlakši način da dobavljač dobije aktivan
+potpisni certifikat (alternativa je ručni upload \texttt{.p12} u koraku 2). Bez
+certifikata potpisani UBL i fiskalizacija ne rade. Fiskalizacija i AS4
+dostava dodatno traže companion servise (\texttt{FISCALIZATION\_SERVICE\_URL},
+\texttt{AS4\_DEFAULT\_PEER\_URL}); koraci 1–4 rade i bez njih.
 \end{leftbar}
 
-\subsection{Potpisivanje AS4 envelopea (\texttt{As4EnvelopeSigner}, WS-Security)}
+Cijela priprema sažeta je u \texttt{composer setup} (install + \texttt{.env} + ključ + migracije +
+kompilacija shema), a razvojni poslužitelj se diže s \texttt{composer dev}. Provjere kvalitete
+(uskladiti prije predaje): \texttt{composer check} (Pint + Rector + PHPStan + testovi),
+\texttt{composer test}, \texttt{composer lint}.
 
-Na transportnom sloju, envelope se potpisuje \textbf{certifikatom access pointa}: prava
-RSA-SHA256 \texttt{ds:Signature} unutar \texttt{wsse:Security} zaglavlja, koja referencira \textbf{payload po
-\texttt{wsu:Id}} preko exclusive-C14N. Odvojeno od XAdES potpisa unutar UBL-a — dva sloja, dva
-certifikata.
+\subsection{Tijek rada (pregled)}
 
-\subsection{Verifikacija (\texttt{SignatureVerifier})}
-
-Verifikacija je \textbf{stvarna} i radi tri provjere:
+Preporučeni redoslijed mapa u kolekciji prati životni ciklus računa:
 
 \begin{enumerate}[nosep]
-  \item \textbf{Autentičnost \texttt{SignedInfo}:} kanonikalizira \texttt{SignedInfo} deklariranom metodom i
-        provjeri \texttt{SignatureValue} javnim ključem iz ugrađenog certifikata (\texttt{openssl\_verify}, SHA-256).
-  \item \textbf{Integritet referenci:} za svaku referencu \textbf{ponovno izračuna digest} iz živog
-        dokumenta i usporedi s onim u potpisu (\texttt{hash\_equals}). Svaki nesklad = sadržaj je mijenjan
-        nakon potpisivanja $\rightarrow$ \texttt{digestMismatch}.
-  \item \textbf{Povjerenje u certifikat:} certifikat se mora lančano vezati na \textbf{povjerljivi CA}
-        (\texttt{TrustStore::isIssuedByTrustedCa}) i biti \textbf{unutar roka valjanosti}
-        (\texttt{isWithinValidityWindow}).
+  \item \textbf{01 Parties} — registriraj dobavljača i kupca.
+  \item \textbf{02 Certificates} — provjeri/učitaj potpisni certifikat dobavljača.
+  \item \textbf{03 Invoices} — kreiraj račun, prebaci u \texttt{queued} (potpisani UBL), dohvati XML.
+  \item \textbf{04 Fiscalization \& Delivery} — fiskaliziraj prema CIS-u i dostavi preko AS4.
+  \item \textbf{05 Inbound \& Network} — zaprimanje dolaznog računa i mrežne usluge (MPS).
 \end{enumerate}
 
-Verifikacija je napisana \textbf{ručno}, ne preko \texttt{xmlseclibs::validateReference()}: ta metoda
-odvaja potpis prije obrade referenci, što čini in-signature XAdES \texttt{SignedProperties}
-referencu nerazrješivom. Ručni pristup daje punu kontrolu nad time \textbf{koji} se potpis
-provjerava (parametar \texttt{signatureXPath} — npr. WS-Security potpis za AS4) i kako se svaka
-referenca kanonikalizira.
+\subsection{Korak 1 — Registracija stranaka}
+
+U mapi \textbf{01 Parties} pošalji \emph{Create Party - Supplier}, zatim
+\emph{Create Party - Buyer}. Zahtjev je \texttt{POST /api/parties} s podacima subjekta:
+
+\begin{Verbatim}
+{ "oib": "12345678903", "name": "TVRTKA A d.o.o.", "is_vat_registered": true,
+  "address_line": "Ulica 1", "city": "ZAGREB", "postcode": "10000",
+  "country_code": "HR", "iban": "HR1723600001101234565" }
+\end{Verbatim}
+
+Odgovor \texttt{201 Created} vraća \texttt{PartyResource}. \texttt{oib} mora proći ISO 7064 (MOD 11,10) kontrolu i biti
+jedinstven, inače slijedi \texttt{422}. Provjeri stranku zahtjevom \emph{Get Party}
+(\texttt{GET /api/parties/\{\{supplier\_oib\}\}}) — adresira se po OIB-u, ne po \texttt{id}.
+
+\screenshot{Bruno — Create Party (Supplier): JSON zahtjev i odgovor 201}
+
+\subsection{Korak 2 — Potpisni certifikat dobavljača}
+
+Dobavljač potpisuje svoje račune, pa mora imati aktivan certifikat. Ako si
+pokrenuo \texttt{pki:generate --parties}, certifikat već postoji — potvrdi to s
+\emph{List Certificates} (\texttt{GET /api/parties/\{\{supplier\_oib\}\}/certificates},
+najnoviji prvi).
+
+Ručno učitavanje (\emph{Upload Certificate}, \texttt{POST .../certificates}) ide na dva
+načina: PKCS\#12 datoteka (polje \texttt{certificate}, \texttt{multipart/form-data},
+uz \texttt{password} ako je zaštićen) ili PEM string u JSON polju
+\texttt{certificate\_pem}. Na uspjeh (\texttt{201}) kolekcija sprema \texttt{data.id} u
+\texttt{certificate\_id}. Opoziv ide preko \emph{Revoke Certificate}
+(\texttt{DELETE}, status $\rightarrow$ \texttt{revoked}, \texttt{204}).
 
 \begin{leftbar}
-\textbf{Tipovi grešaka} (\texttt{SignatureVerificationException}): nedostaje potpis/certifikat,
-nevaljan potpis, digest mismatch, \textbf{untrusted} (lanac ne vodi do CA), \textbf{expired}.
-Verifikator namjerno razlikuje „untrusted” od „expired”.
+Privatni ključ nikad nije dio odgovora — \texttt{CertificateResource} izlaže samo javni
+\texttt{certificate\_pem} i metapodatke (subject, issuer, rok valjanosti, fingerprint).
 \end{leftbar}
 
-\subsection{Trust store (\texttt{TrustStore})}
+\screenshot{Bruno — List Certificates: aktivan certifikat dobavljača}
 
-Skup CA certifikata kojima eRakun vjeruje. Leaf je povjerljiv ako mu se potpis verificira
-protiv jednog od \textbf{dva testna korijena} (FINA-like + PEPPOL-like). Sidra se učitavaju
-\textbf{lijeno} (tek pri prvoj verifikaciji), pa razrješavanje verifikatora ne pukne na sustavu
-koji još nije generirao PKI. U produkciji bi to bili pravi FINA i OpenPEPPOL korijeni.
+\subsection{Korak 3 — Kreiranje izlaznog računa}
 
-\subsection{Razrješavanje potpisnih vjerodajnica (\texttt{PartySigningCredentials})}
+U mapi \textbf{03 Invoices} pošalji \emph{Create Invoice} (\texttt{POST /api/invoices}).
+Tijelo je strukturirani JSON; posrednik sam izračunava neto, PDV i ukupno iz stavki:
 
-Pri potpisivanju, vjerodajnice stranke razrješavaju se iz njenog \textbf{jedinog aktivnog
-certifikata} (\texttt{activeCertificate}). Ako stranka nema aktivni certifikat, baca se iznimka —
-\textbf{dokument nikad ne smije izaći nepotpisan.}
+\begin{Verbatim}
+{ "supplier_oib": "12345678903", "buyer_oib": "98765432106",
+  "invoice_number": "RN-2026-00042", "issue_date": "2026-04-15",
+  "due_date": "2026-05-15", "direction": "outbound", "currency": "EUR",
+  "lines": [ { "description": "Konzultantske usluge", "quantity": 1,
+    "unit_price": 100.00, "vat_rate": 25.00, "vat_category": "S",
+    "unit_code": "H87", "kpd_code": "622020" } ] }
+\end{Verbatim}
 
-\subsection{Sažetak sigurnosnih svojstava}
+Račun nastaje u statusu \texttt{draft}; odgovor \texttt{201} sprema \texttt{data.id} u
+\texttt{invoice\_id}. Ključna ograničenja: dobavljač i kupac moraju postojati i biti
+različiti, \texttt{invoice\_number} je jedinstven po dobavljaču, a \texttt{kpd\_code} mora
+biti 6 znamenki iz CPA liste (npr. \texttt{622020}, \texttt{960212}) — zahtjev
+provjerava samo duljinu, ali nevaljan kod puca tek u koraku 4 (Schematron HR-BR-25).
+
+\screenshot{Bruno — Create Invoice: zahtjev i odgovor s izračunatim iznosima}
+
+\subsection{Korak 4 — Generiranje i potpisivanje UBL-a}
+
+Pošalji \emph{Update Invoice Status} (\texttt{PATCH /api/invoices/\{\{invoice\_id\}\}/status})
+s tijelom \texttt{\{ "status": "queued" \}}. Prijelaz \texttt{draft $\rightarrow$ queued}
+(samo za \texttt{outbound}) je onaj koji generira UBL 2.1 / HR-CIUS i potpisuje ga
+(XAdES-B) te ga sprema na račun. Tek nakon toga \emph{Get Invoice XML}
+(\texttt{GET .../xml}, \texttt{Accept: application/xml}) vraća potpisani dokument,
+a dostava ima što slati.
+
+Ako stavka nosi KPD kod izvan CPA liste, ovdje slijedi \texttt{422} (EN 16931 / HR-BR-25),
+a status ostaje \texttt{draft}. Dopušteni prijelazi: \texttt{draft $\rightarrow$ queued
+$\rightarrow$ sent $\rightarrow$ delivered\,/\,rejected} (matrica u poglavlju
+\emph{Use case-ovi}); nedopušten prijelaz vraća grešku.
+
+\screenshot{Bruno — Get Invoice XML: potpisani UBL (ds:Signature blok)}
+
+\subsection{Korak 5 — Fiskalizacija i AS4 dostava}
+
+U mapi \textbf{04 Fiscalization \& Delivery}:
 
 \begin{itemize}[nosep]
-  \item \textbf{Integritet i autentičnost} računa: XAdES-B potpis stranke; transport: WS-Security potpis AP-a.
-  \item \textbf{Neporecivost (osnovna):} \texttt{SigningTime} + vezanje na konkretan certifikat (digest + issuer/serial).
-  \item \textbf{Provjera povjerenja:} lanac do CA + rok valjanosti, na obje strane razmjene.
-  \item \textbf{Zaštita tajni:} privatni ključevi nikad ne napuštaju PKI disk niti se serijaliziraju u API.
-  \item \textbf{Svjesna granica:} korijeni povjerenja su testni; nema OCSP/CRL provjere opoziva
-        certifikata, ni vremenskog žiga treće strane (TSA) — izvan opsega (vidi poglavlje 8).
+  \item \emph{Fiscalize Invoice} (\texttt{POST .../fiscalize}) — šalje fiskalni zapis u CIS
+        (mock Porezne) i bilježi ishod na računu. \texttt{200} = prihvaćeno;
+        \texttt{409} = već u završnom stanju.
+  \item \emph{Deliver Invoice (AS4)} (\texttt{POST .../deliver}) — slaže AS4/SOAP poruku s
+        potpisanim UBL-om i bilježi potvrdu. Traži potpisani UBL (korak 4) i živu
+        peer pristupnu točku; bez peera \texttt{422 „AS4 peer rejected the delivery.”}.
 \end{itemize}
 
+Rezultat čitaš kroz \emph{Get Invoice} (\texttt{GET /api/invoices/\{\{invoice\_id\}\}}): blok
+\texttt{fiscalization} (npr. \texttt{state: accepted}, \texttt{match\_status: matched}) i blok
+\texttt{delivery} (npr. \texttt{state: acknowledged}). Oba su \texttt{null} dok pripadna
+poruka ne postoji.
+
+\screenshot{Bruno — Get Invoice nakon fiskalizacije i dostave (blokovi fiscalization i delivery)}
+
+\subsection{Korak 6 — Zaprimanje i mrežne usluge}
+
+Mapa \textbf{05 Inbound \& Network} pokriva primateljsku stranu:
+
+\begin{itemize}[nosep]
+  \item \emph{Receive Inbound UBL} (\texttt{POST /api/invoices/inbound}, tijelo je sirovi
+        UBL XML) — posrednik validira UBL/HR-CIUS i potpis, parsira i pohranjuje
+        kao \texttt{inbound} račun (\texttt{received}). Priloženi uzorak iz repoa
+        nije potpisan pa kako jest vraća \texttt{422 „The document carries no
+        ds:Signature.”}; valjani ulaz je potpisani XML iz koraka 4 (idealno s druge
+        instance).
+  \item \emph{MPS Participant Lookup} (\texttt{GET /api/mps/participants/\{\{supplier\_oib\}\}})
+        — za zadani OIB vraća \texttt{as4\_endpoint} (analogno PEPPOL SML/SMP). \texttt{404}
+        ako OIB nije opslužen.
+  \item \emph{AS4 Inbox} (\texttt{POST /api/as4/inbox}) — server-to-server prijemna točka;
+        u normalnom radu je ne pozivaš ručno, nego je zove suprotni posrednik.
+\end{itemize}
+
+\screenshot{Bruno — MPS Participant Lookup: oib i as4\_endpoint}
+
+\subsection{Čitanje statusa i česte greške}
+
+\begin{tabularx}{\textwidth}{@{}lY@{}}
+\toprule
+\textbf{Simptom} & \textbf{Uzrok / rješenje} \\
+\midrule
+\texttt{422} pri kreiranju računa & Nepostojeći ili jednaki OIB-ovi, dupli \texttt{invoice\_number}, kriv format polja. \\
+\texttt{422} pri \texttt{$\rightarrow$ queued} & KPD kod nije u CPA listi (HR-BR-25) ili UBL ne prolazi Schematron; status ostaje \texttt{draft}. \\
+\emph{Deliver} vraća \texttt{200} bez učinka & Račun nema potpisani UBL — prvo ga prebaci u \texttt{queued} (korak 4). \\
+\emph{Deliver}/\emph{Fiscalize} transportna greška & Companion servis (peer / CIS mock) nije pokrenut ili je kriv URL u \texttt{.env}. \\
+\emph{Receive Inbound} \texttt{422} (nema potpisa) & Ulazni UBL mora biti potpisani dokument iz \emph{Get Invoice XML}. \\
+\texttt{409} pri \emph{Fiscalize}/\emph{Deliver} & Radnja je već u završnom stanju (idempotentno; nema dvostruke prijave). \\
+\bottomrule
+\end{tabularx}
+
+\begin{leftbar}
+\textbf{Puni round-trip između dvije instance.} Pokreni drugu instancu eRakuna kao
+primatelja (zaseban \texttt{.env}/port, vidi \texttt{.env.peer}) i usmjeri AS4/peer
+konfiguraciju jedne na drugu; račun tada prođe Supplier ERP $\rightarrow$ Sender AP
+$\rightarrow$ Receiver AP $\rightarrow$ Buyer ERP. Automatizirano u
+\texttt{tests/Integration/TwoInstanceRoundTripTest.php}.
+\end{leftbar}
+
 % =============================================================================
-\section{Zaključak i ograničenja}
+\section{Zaključak i ograničenja}\label{sec:zakljucak}
 
 \subsection{Što projekt postiže}
 
-eRakun implementira \textbf{funkcionalnu jezgru informacijskog posrednika} za Fiskalizaciju 2.0,
-pokrivajući cijeli 4-corner tijek razmjene eRačuna:
+eRakun implementira funkcionalnu jezgru informacijskog posrednika za Fiskalizaciju 2.0,
+pokrivajući cijeli 4-corner tijek razmjene eRačuna — od ERP integracije, preko UBL 2.1 / HR-CIUS,
+potpisivanja i verifikacije na dva sloja i fiskalizacije sa sravnjivanjem, do AS4 razmjene i
+dinamičkog otkrivanja primatelja. Opseg je razrađen u poglavlju \ref{sec:opseg} i kroz use
+case-ove, pa se ovdje ne ponavlja.
 
-\begin{itemize}[nosep]
-  \item \textbf{ERP integracija} (REST API) za izlazne i ulazne račune;
-  \item \textbf{UBL 2.1 / HR-CIUS} generiranje i parsiranje, uz \textbf{XSD + Schematron} validaciju;
-  \item \textbf{pravo digitalno potpisivanje i verifikaciju} na dva sloja (XAdES-B na dokumentu,
-        WS-Security na transportu) s vlastitim PKI-jem i provjerom lanca povjerenja;
-  \item \textbf{fiskalizaciju} prema mock CIS-u sa \textbf{sravnjivanjem} (matched/mismatch/pending) i
-        živim osvježavanjem statusa;
-  \item \textbf{AS4} razmjenu između dva posrednika s receipt/error envelopeima i ebMS kodovima;
-  \item \textbf{dinamičko otkrivanje} primatelja preko AMS/MPS, uz fallback na konfiguraciju.
-\end{itemize}
-
-Arhitektura je dosljedna: tanki REST kontroleri, poslovna logika u Action klasama, vanjski
-servisi iza sučelja (zamjenjivi mock $\leftrightarrow$ produkcija bez diranja domene), te \textbf{čvrste
-invarijante} (dopušteni prijelazi stanja, single-active certifikat, idempotentne radnje).
+Vrijednost rješenja je u dosljednoj slojevitoj arhitekturi (\ref{sec:slojevi}, \ref{sec:di}):
+domena odvojena od HTTP-a i transporta, a vanjski servisi zamjenjivi mock $\leftrightarrow$
+produkcija bez diranja domene. Tome se pridružuju čvrste invarijante: dopušteni prijelazi
+stanja, single-active certifikat i idempotentne radnje.
 
 \subsection{Svjesna ograničenja}
 
-Sve navedeno su \textbf{namjerne granice opsega} studentskog projekta — prikladne ovdje, ali
+Sve navedeno su namjerne granice opsega studentskog projekta — prikladne ovdje, ali
 označene da se ne prenose u nešto stvarno:
 
 \begin{tabularx}{\textwidth}{@{}lY@{}}
@@ -1541,37 +1492,6 @@ Sigurnost API-ja & Nema autentikacije/autorizacije ERP klijenata, rate-limitinga
 Otpornost & Dostava/fiskalizacija se ponavljaju ručno (retry endpointi); nema automatskih redova/poslova. \\
 \bottomrule
 \end{tabularx}
-
-\subsection{Mogući budući rad}
-
-\begin{itemize}[nosep]
-  \item Implementirati preostale eReporting tipove poruka i njihove životne cikluse.
-  \item Dodati provjeru opoziva certifikata (OCSP/CRL) i XAdES-T (TSA žig).
-  \item Autentikacija ERP klijenata (API tokeni/mTLS) i razdvajanje po klijentima (multi-tenancy).
-  \item Asinkrona dostava/fiskalizacija preko redova poslova s automatskim ponavljanjem.
-  \item Webhook iz CIS-a za \texttt{match\_status} umjesto re-fetcha pri čitanju.
-\end{itemize}
-
-% =============================================================================
-\section{Dodatak: pokretanje i testiranje}
-
-\textbf{Postavljanje i pokretanje:}
-\begin{Verbatim}
-composer setup     # install, .env, key, migrate, instalacija + kompilacija shema
-php artisan pki:generate --parties   # generiraj testni PKI + certifikate strankama
-composer dev       # pokreni razvojni poslužitelj (php artisan serve)
-\end{Verbatim}
-
-\textbf{Provjere kvalitete} (uskladiti prije predaje):
-\begin{Verbatim}
-composer check     # pint --test + rector --dry-run + phpstan + test (paralelno)
-composer test      # samo testovi
-composer lint      # automatsko formatiranje (Pint)
-\end{Verbatim}
-
-\textbf{Dvije instance za puni round-trip:} pokreni drugu instancu eRakuna kao primatelja
-(zaseban \texttt{.env} / port, vidi \texttt{.env.peer}) i usmjeri AS4/peer konfiguraciju jedne na drugu
-da račun proteče Supplier ERP $\rightarrow$ Sender AP $\rightarrow$ Receiver AP $\rightarrow$ Buyer ERP.
 
 % =============================================================================
 \section{Literatura i izvori}
