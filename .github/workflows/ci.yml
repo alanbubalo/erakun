@@ -6,12 +6,19 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ci:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -27,7 +34,12 @@ jobs:
           java-version: '17'
 
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist
+        uses: ramsey/composer-install@v3
+
+      - name: Prepare app environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
 
       - name: Cache Saxon-HE jars
         id: cache-saxon
