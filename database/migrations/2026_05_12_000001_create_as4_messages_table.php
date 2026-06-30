@@ -26,7 +26,12 @@ return new class extends Migration
             $table->timestamp('received_at')->nullable();
             $table->timestamps();
 
-            $table->unique('message_id');
+            // A single AS4 message legitimately produces two rows in a loopback
+            // intermediary: the sender's outbound copy and the receiver's
+            // inbound copy, which share the same ebMS MessageId. Scope
+            // uniqueness by direction so the outbound row does not collide with
+            // the inbound row the receiving side persists while handling it.
+            $table->unique(['direction', 'message_id']);
         });
     }
 

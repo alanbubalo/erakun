@@ -34,12 +34,29 @@ it('exposes as4Messages HasMany on Invoice', function (): void {
     expect($invoice->as4Messages)->toHaveCount(2);
 });
 
-it('enforces a unique message_id', function (): void {
+it('enforces a unique message_id per direction', function (): void {
     $invoice = Invoice::factory()->create();
     $duplicate = 'shared-id@erakun';
 
-    As4Message::factory()->for($invoice)->create(['message_id' => $duplicate]);
+    As4Message::factory()->for($invoice)->create([
+        'direction' => As4MessageDirection::Outbound,
+        'message_id' => $duplicate,
+    ]);
 
-    expect(fn () => As4Message::factory()->for($invoice)->create(['message_id' => $duplicate]))
-        ->toThrow(QueryException::class);
+    expect(fn () => As4Message::factory()->for($invoice)->create([
+        'direction' => As4MessageDirection::Outbound,
+        'message_id' => $duplicate,
+    ]))->toThrow(QueryException::class);
+});
+
+it('allows the same message_id across directions for loopback delivery', function (): void {
+    $invoice = Invoice::factory()->create();
+    $shared = 'loopback-id@erakun';
+
+    As4Message::factory()->inbound()->for($invoice)->create(['message_id' => $shared]);
+
+    expect(fn () => As4Message::factory()->for($invoice)->create([
+        'direction' => As4MessageDirection::Outbound,
+        'message_id' => $shared,
+    ]))->not->toThrow(QueryException::class);
 });
