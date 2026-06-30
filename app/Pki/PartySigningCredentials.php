@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Pki;
 
+use App\Exceptions\MissingSigningCertificateException;
 use App\Models\Party;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use RuntimeException;
 
 /**
  * Resolves the signing credential a party signs documents with: its single
@@ -19,11 +19,7 @@ final class PartySigningCredentials
     {
         $certificate = $party->activeCertificate()->first();
 
-        throw_unless(
-            $certificate !== null,
-            RuntimeException::class,
-            "Party {$party->oib} has no active signing certificate. Upload one or run `php artisan pki:generate --parties`.",
-        );
+        throw_if($certificate === null, MissingSigningCertificateException::class, $party->oib);
 
         return $certificate->toSigningCredential();
     }

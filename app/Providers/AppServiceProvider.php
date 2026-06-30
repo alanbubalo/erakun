@@ -31,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(UblValidator::class, fn (): UblValidator => new UblValidator(
             schemasPath: resource_path('schemas'),
+            javaBinary: (string) config('services.saxon.java_binary'),
         ));
 
         $this->app->singleton(FiscalizationService::class, fn (): HttpFiscalizationService => new HttpFiscalizationService(

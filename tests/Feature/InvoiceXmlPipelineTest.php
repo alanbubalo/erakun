@@ -35,6 +35,21 @@ it('blocks Draft to Queued and returns validation_report when generated XML is i
     expect($invoice->fresh()->ubl_xml)->toBeNull();
 });
 
+it('blocks Draft to Queued with 422 when the signing party has no active certificate', function (): void {
+    $invoice = InvoiceFixture::outbound();
+    $invoice->supplier->certificates()->delete();
+
+    $response = $this->patchJson("/api/invoices/{$invoice->id}/status", [
+        'status' => 'queued',
+    ]);
+
+    $response->assertStatus(422)
+        ->assertJsonPath('message', "Party {$invoice->supplier->oib} has no active signing certificate. Upload one or run `php artisan pki:generate --parties`.");
+
+    expect($invoice->fresh()->status)->toBe(InvoiceStatus::Draft);
+    expect($invoice->fresh()->ubl_xml)->toBeNull();
+});
+
 it('returns persisted XML on GET /xml for queued invoice', function (): void {
     $invoice = InvoiceFixture::outbound();
     $this->patchJson("/api/invoices/{$invoice->id}/status", ['status' => 'queued'])->assertOk();

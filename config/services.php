@@ -42,6 +42,14 @@ return [
         'timeout' => (int) env('FISCALIZATION_SERVICE_TIMEOUT', 10),
     ],
 
+    // Saxon (XSLT processor) runs the compiled Schematron validators. It needs a
+    // Java runtime; JAVA_BIN points at the `java` binary to use. Defaults to the
+    // one on PATH, but on macOS /usr/bin/java is a stub unless a JDK is installed,
+    // so set JAVA_BIN to a real runtime (e.g. an installed Temurin or a bundled JBR).
+    'saxon' => [
+        'java_binary' => env('JAVA_BIN', 'java'),
+    ],
+
     'as4' => [
         'timeout' => (int) env('AS4_TIMEOUT', 15),
         'default_peer_url' => env('AS4_DEFAULT_PEER_URL', 'http://localhost:8002'),

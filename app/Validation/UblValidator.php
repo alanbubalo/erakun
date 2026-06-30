@@ -20,6 +20,7 @@ class UblValidator
 
     public function __construct(
         private readonly string $schemasPath,
+        private readonly string $javaBinary = 'java',
     ) {}
 
     public function validate(string $xml): ValidationReport
@@ -120,7 +121,7 @@ class UblValidator
 
         try {
             $result = Process::run([
-                'java', '-cp', $this->saxonClasspath(), 'net.sf.saxon.Transform',
+                $this->javaBinary, '-cp', $this->saxonClasspath(), 'net.sf.saxon.Transform',
                 '-s:'.$xmlPath, '-xsl:'.$xsl, '-o:'.$svrlPath,
             ]);
 
