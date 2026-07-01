@@ -521,7 +521,8 @@ Verifikacija (\texttt{SignatureVerifier}) je stvarna i radi tri provjere:
 \textbf{integritet} (ponovni digest svake reference iz živog dokumenta uz \texttt{hash\_equals} — svaka
 izmjena nakon potpisa daje \texttt{digestMismatch}) i \textbf{povjerenje} (lanac do povjerljivog CA +
 rok valjanosti), na obje strane razmjene. Pri potpisivanju se koristi jedini aktivni
-certifikat stranke; bez njega se baca iznimka — dokument nikad ne izlazi nepotpisan.
+certifikat stranke; bez njega se prijelaz odbija s \texttt{422}
+(\texttt{MissingSigningCertificateException}) — dokument nikad ne izlazi nepotpisan.
 
 % =============================================================================
 \section{Use case-ovi}
@@ -955,7 +956,9 @@ side-effecte iz tablice gore ($\rightarrow$ \texttt{sent}, outbound: AS4 dostava
 Na uspjeh vraća \texttt{200 OK} s ažuriranim \texttt{InvoiceResource}.
 
 \textbf{Greške i decoupling:} nedopušten prijelaz $\rightarrow$ iznimka (\texttt{409}/\texttt{422}); nevaljan
-UBL (XSD/Schematron) $\rightarrow$ \texttt{422} s izvještajem validacije, status ostaje zatečen. Ako
+UBL (XSD/Schematron) $\rightarrow$ \texttt{422} s izvještajem validacije, status ostaje zatečen; dobavljač bez
+aktivnog potpisnog certifikata (prijelaz \texttt{draft $\rightarrow$ queued}) $\rightarrow$ \texttt{422}
+(\texttt{MissingSigningCertificateException}), status ostaje \texttt{draft}. Ako
 \emph{nakon} prijelaza AS4 dostava ili fiskalizacija bace iznimku, prijelaz se ne poništava
 (decoupling, \ref{sec:tijek}) — greška se zapiše na pripadni red i radnja ponavlja preko UC-B6/UC-B7.
 
@@ -997,7 +1000,7 @@ ponovnog poziva postojeća se poruka ponovno koristi (upsert), ne stvara se dupl
 \textbf{Akteri} & ERP / administrator (ili automatski iz UC-B5) \\
 \textbf{Cilj} & Dostaviti potpisani UBL primateljevom posredniku preko AS4. \\
 \textbf{Endpoint} & \texttt{POST /invoices/\{invoice\}/deliver} \\
-\textbf{Kod} & \texttt{InvoiceDeliveryController@store} $\rightarrow$ \texttt{SubmitAs4Delivery} \\
+\textbf{Kod} & \texttt{InvoiceDeliveryController@store} $\rightarrow$ \texttt{DeliverInvoice} $\rightarrow$ \texttt{SubmitAs4Delivery} \\
 \bottomrule
 \end{tabularx}
 
@@ -1015,6 +1018,10 @@ ponovnog poziva postojeća se poruka ponovno koristi (upsert), ne stvara se dupl
     \end{itemize}
   \item \textbf{Uspjeh:} kreira se izlazni red u \texttt{as4\_messages} u stanju \texttt{acknowledged}
         (\texttt{message\_id}, \texttt{ref\_to\_message\_id}, envelope + receipt XML, \texttt{sent\_at}, \texttt{acknowledged\_at}).
+        Nakon potvrde \texttt{DeliverInvoice} pomiče izlazni račun kroz \texttt{sent} do završnog
+        \texttt{delivered} (svaki hop čuvan kroz \texttt{canTransitionTo}, pa je račun koji je već
+        djelomično napredovao siguran no-op). Zato \texttt{PATCH .../status} $\rightarrow$ \texttt{sent} završava
+        na \texttt{sent} (eksplicitni cilj), a samostalni \texttt{deliver} bez cilja dovršava životni ciklus.
   \item \textbf{Greška} (\texttt{As4DeliveryException}):
     \begin{itemize}[nosep]
       \item ako je envelope već bio izgrađen $\rightarrow$ zapiše se \texttt{as4\_messages} red u stanju \texttt{error}
@@ -1232,7 +1239,7 @@ invarijante na razini baze koje se iz njega ne vide:
 \texttt{invoices} & Iznosi (\texttt{net}/\texttt{tax}/\texttt{total}) izračunati na serveru (decimal, bcmath), \texttt{currency} default \texttt{EUR}. \texttt{ubl\_xml\_path} drži putanju do UBL-a na disku — sadržaj \texttt{ubl\_xml} je read-only accessor koji streama dokument verbatim (byte-fidelity; vidi UC-B4 i \ref{sec:pki}). \\
 \texttt{invoice\_lines} & FK na \texttt{invoices} (cascade); \texttt{kpd\_code} 6 znamenki, \texttt{unit\_code} default \texttt{H87}. \\
 \texttt{fiscal\_messages} & unique \texttt{(invoice\_id, reporter\_oib, message\_type)} — svaka strana ima točno jednu FIS poruku po računu (temelj idempotentnog upserta, UC-B6); \texttt{request}/\texttt{response\_xml} su revizijski trag. \\
-\texttt{as4\_messages} & \texttt{message\_id} unique $\rightarrow$ replay-idempotentnost prijema (UC-C2); \texttt{invoice\_id} nullable (poruka može nastati prije vezivanja uz račun). \\
+\texttt{as4\_messages} & unique \texttt{(direction, message\_id)} $\rightarrow$ replay-idempotentnost prijema (UC-C2); uniqueness je omeđena smjerom jer u loopback razmjeni jedna AS4 poruka daje dva reda — pošiljateljev izlazni i primateljev ulazni — s istim ebMS \texttt{message\_id}. \texttt{invoice\_id} nullable (poruka može nastati prije vezivanja uz račun). \\
 \texttt{certificates} & FK na \texttt{parties} (cascade); index \texttt{(party\_id, status)} pogoni „single-active” invarijantu. \texttt{certificate\_pem} je javni; \texttt{private\_key\_path} pokazuje na ključ na PKI disku i nikad se ne serijalizira. \\
 \bottomrule
 \end{tabularx}
@@ -1406,6 +1413,7 @@ U mapi \textbf{04 Fiscalization \& Delivery}:
   \item \emph{Deliver Invoice (AS4)} (\texttt{POST .../deliver}) — slaže AS4/SOAP poruku s
         potpisanim UBL-om i bilježi potvrdu. Traži potpisani UBL (korak 4) i živu
         peer pristupnu točku; bez peera \texttt{422 „AS4 peer rejected the delivery.”}.
+        Na potvrđenu dostavu izlazni račun prelazi u završni \texttt{delivered}.
 \end{itemize}
 
 Rezultat čitaš kroz \emph{Get Invoice} (\texttt{GET /api/invoices/\{\{invoice\_id\}\}}): blok
