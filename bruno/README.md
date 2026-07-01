@@ -56,7 +56,9 @@ i `invoice_id` drži u okolini *Local*; `invoice_id` se automatski sprema nakon
   *Get Invoice XML* vraća potpis, a *Deliver* i *Receive Inbound UBL* rade
   (inbound odbija nepotpisani UBL s `422`).
 - **Redoslijed za potpunu dostavu:** Create Invoice → Update Status (`queued`)
-  → Deliver / Fiscalize.
+  → Deliver / Fiscalize. Uspješan *Deliver* pomiče status izlaznog računa na
+  `delivered` (kroz `queued -> sent -> delivered`); *Fiscalize* ne dira status
+  (rezultat je na `fiscal_messages`).
 
 ## Companion servisi (za fiskalizaciju i dostavu)
 

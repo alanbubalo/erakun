@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\DeliverInvoice;
 use App\Actions\SubmissionOutcome;
-use App\Actions\SubmitAs4Delivery;
 use App\Http\Resources\InvoiceResource;
 use App\Models\Invoice;
 use Illuminate\Http\JsonResponse;
 
 class InvoiceDeliveryController extends Controller
 {
-    public function store(Invoice $invoice, SubmitAs4Delivery $action): JsonResponse
+    public function store(Invoice $invoice, DeliverInvoice $action): JsonResponse
     {
         $result = $action->execute($invoice);
 

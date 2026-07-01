@@ -26,6 +26,12 @@ docs {
     `http://localhost:8002`). Ako peer ne radi/odbije, vraća
     `422 "AS4 peer rejected the delivery."`.
 
-  - 200: dostavljeno — zabilježena `acknowledged` AS4 poruka.
+  Uspješna potvrda (acknowledgement) **pomiče i status računa** na `delivered`
+  (izlazni računi). Prijelaz ide kroz dozvoljene korake stanja (`queued -> sent
+  -> delivered`) i čuvan je: račun koji je već završen ili u stanju bez prijelaza
+  ostaje netaknut. Za razliku od ovoga, prijelaz `queued -> sent` (Update Status)
+  namjerno završava na `sent` — dostava se tamo bilježi na razini AS4 poruke.
+
+  - 200: dostavljeno — zabilježena `acknowledged` AS4 poruka, status `delivered`.
   - 409: AS4 dostava je već potvrđena.
 }

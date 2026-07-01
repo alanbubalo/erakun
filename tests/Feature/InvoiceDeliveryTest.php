@@ -120,6 +120,21 @@ describe('POST /api/invoices/{invoice}/deliver', function (): void {
         $this->postJson('/api/invoices/9999/deliver')->assertNotFound();
     });
 
+    it('advances a queued invoice to delivered on a successful acknowledgement', function (): void {
+        fakeAs4Receipt();
+
+        $invoice = queueOutboundDeliveryInvoice();
+        expect($invoice->status)->toBe(InvoiceStatus::Queued);
+
+        $response = $this->postJson("/api/invoices/{$invoice->id}/deliver");
+
+        $response->assertOk()
+            ->assertJsonPath('data.status', 'delivered')
+            ->assertJsonPath('data.delivery.state', 'acknowledged');
+
+        expect($invoice->fresh()->status)->toBe(InvoiceStatus::Delivered);
+    });
+
     it('returns 409 when the latest delivery is already acknowledged', function (): void {
         fakeAs4Receipt();
 
@@ -179,5 +194,7 @@ describe('POST /api/invoices/{invoice}/deliver', function (): void {
         $message = $invoice->fresh()->latestAs4MessageFor(As4MessageDirection::Outbound);
         expect($message->state)->toBe(As4MessageState::Acknowledged)
             ->and($message->error_code)->toBeNull();
+
+        expect($invoice->fresh()->status)->toBe(InvoiceStatus::Delivered);
     });
 });
