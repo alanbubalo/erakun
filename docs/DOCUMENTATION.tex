@@ -1322,7 +1322,7 @@ Preporučeni redoslijed mapa u kolekciji prati životni ciklus računa:
   \item \textbf{01 Parties} — registriraj dobavljača i kupca.
   \item \textbf{02 Certificates} — provjeri/učitaj potpisni certifikat dobavljača.
   \item \textbf{03 Invoices} — kreiraj račun, prebaci u \texttt{queued} (potpisani UBL), dohvati XML.
-  \item \textbf{04 Fiscalization \& Delivery} — fiskaliziraj prema CIS-u i dostavi preko AS4.
+  \item \textbf{04 Delivery \& Fiscalization} — dostavi preko AS4 pa fiskaliziraj prema CIS-u.
   \item \textbf{05 Inbound \& Network} — zaprimanje dolaznog računa i mrežne usluge (MPS).
 \end{enumerate}
 
@@ -1402,18 +1402,18 @@ $\rightarrow$ sent $\rightarrow$ delivered\,/\,rejected} (matrica u poglavlju
 
 \screenshot{Bruno — Get Invoice XML: potpisani UBL (ds:Signature blok)}
 
-\subsection{Korak 5 — Fiskalizacija i AS4 dostava}
+\subsection{Korak 5 — AS4 dostava i fiskalizacija}
 
-U mapi \textbf{04 Fiscalization \& Delivery}:
+U mapi \textbf{04 Delivery \& Fiscalization}:
 
 \begin{itemize}[nosep]
-  \item \emph{Fiscalize Invoice} (\texttt{POST .../fiscalize}) — šalje fiskalni zapis u CIS
-        (mock Porezne) i bilježi ishod na računu. \texttt{200} = prihvaćeno;
-        \texttt{409} = već u završnom stanju.
   \item \emph{Deliver Invoice (AS4)} (\texttt{POST .../deliver}) — slaže AS4/SOAP poruku s
         potpisanim UBL-om i bilježi potvrdu. Traži potpisani UBL (korak 4) i živu
         peer pristupnu točku; bez peera \texttt{422 „AS4 peer rejected the delivery.”}.
         Na potvrđenu dostavu izlazni račun prelazi u završni \texttt{delivered}.
+  \item \emph{Fiscalize Invoice} (\texttt{POST .../fiscalize}) — šalje fiskalni zapis u CIS
+        (mock Porezne) i bilježi ishod na računu. \texttt{200} = prihvaćeno;
+        \texttt{409} = već u završnom stanju.
 \end{itemize}
 
 Rezultat čitaš kroz \emph{Get Invoice} (\texttt{GET /api/invoices/\{\{invoice\_id\}\}}): blok
@@ -1429,11 +1429,14 @@ Mapa \textbf{05 Inbound \& Network} pokriva primateljsku stranu:
 
 \begin{itemize}[nosep]
   \item \emph{Receive Inbound UBL} (\texttt{POST /api/invoices/inbound}, tijelo je sirovi
-        UBL XML) — posrednik validira UBL/HR-CIUS i potpis, parsira i pohranjuje
-        kao \texttt{inbound} račun (\texttt{received}). Priloženi uzorak iz repoa
-        nije potpisan pa kako jest vraća \texttt{422 „The document carries no
-        ds:Signature.”}; valjani ulaz je potpisani XML iz koraka 4 (idealno s druge
-        instance).
+        UBL XML) — ručni dokumentni ekvivalent AS4 prijema (isti potpisani UBL, bez
+        SOAP/AS4 omotača). Posrednik validira UBL/HR-CIUS i potpis, parsira i
+        pohranjuje kao \texttt{inbound} račun (\texttt{received}). Priloženi uzorak
+        je \textbf{potpisani} HR-CIUS dokument pa prolazi kako jest: \texttt{201}
+        (nov) ili \texttt{200} (već postoji istovjetan \texttt{inbound}); nevažeći ili
+        nedostajući potpis $\rightarrow$ \texttt{422}. Pozivaj ga na peeru — na
+        pošiljatelju bi stvorio drugi \texttt{inbound} zapis (\texttt{201}) jer dedup
+        gleda samo \texttt{inbound} zapise.
   \item \emph{MPS Participant Lookup} (\texttt{GET /api/mps/participants/\{\{supplier\_oib\}\}})
         — za zadani OIB vraća \texttt{as4\_endpoint} (analogno PEPPOL SML/SMP). \texttt{404}
         ako OIB nije opslužen.
@@ -1453,7 +1456,8 @@ Mapa \textbf{05 Inbound \& Network} pokriva primateljsku stranu:
 \texttt{422} pri \texttt{$\rightarrow$ queued} & KPD kod nije u CPA listi (HR-BR-25) ili UBL ne prolazi Schematron; status ostaje \texttt{draft}. \\
 \emph{Deliver} vraća \texttt{200} bez učinka & Račun nema potpisani UBL — prvo ga prebaci u \texttt{queued} (korak 4). \\
 \emph{Deliver}/\emph{Fiscalize} transportna greška & Companion servis (peer / CIS mock) nije pokrenut ili je kriv URL u \texttt{.env}. \\
-\emph{Receive Inbound} \texttt{422} (nema potpisa) & Ulazni UBL mora biti potpisani dokument iz \emph{Get Invoice XML}. \\
+\emph{Receive Inbound} \texttt{422} & Potpis ulaznog UBL-a nevažeći ili nedostaje (priloženi uzorak je potpisan i prolazi). \\
+\emph{Receive Inbound} stvara duplikat & Pozvan na pošiljatelju (drži izlazni); dedup gleda samo \texttt{inbound} — pozivaj na peeru. \\
 \texttt{409} pri \emph{Fiscalize}/\emph{Deliver} & Radnja je već u završnom stanju (idempotentno; nema dvostruke prijave). \\
 \bottomrule
 \end{tabularx}
@@ -1462,7 +1466,10 @@ Mapa \textbf{05 Inbound \& Network} pokriva primateljsku stranu:
 \textbf{Puni round-trip između dvije instance.} Pokreni drugu instancu eRakuna kao
 primatelja (zaseban \texttt{.env}/port, vidi \texttt{.env.peer}) i usmjeri AS4/peer
 konfiguraciju jedne na drugu; račun tada prođe Supplier ERP $\rightarrow$ Sender AP
-$\rightarrow$ Receiver AP $\rightarrow$ Buyer ERP. Automatizirano u
+$\rightarrow$ Receiver AP $\rightarrow$ Buyer ERP. Da bi obostrana fiskalizacija dala
+\texttt{match\_status: matched}, obje instance moraju prijavljivati na \textbf{isti}
+CIS — provjeri da \texttt{FISCALIZATION\_SERVICE\_URL} u \texttt{.env.peer} pokazuje na
+isti mock (\texttt{:8001}) kao glavni \texttt{.env}. Automatizirano u
 \texttt{tests/Integration/TwoInstanceRoundTripTest.php}.
 \end{leftbar}
 
