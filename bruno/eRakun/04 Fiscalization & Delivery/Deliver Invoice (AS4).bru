@@ -34,4 +34,36 @@ docs {
 
   - 200: dostavljeno — zabilježena `acknowledged` AS4 poruka, status `delivered`.
   - 409: AS4 dostava je već potvrđena.
+
+  ## Dvoinstančni test (kako zapravo pogoditi AS4 Inbox)
+
+  Inbox (`/as4/inbox`) ne zoveš ručno — potpisanu envelope složi i pošalje ova
+  dostava. Podigni dvije instance, svaku na **svojoj bazi**:
+
+    php artisan serve --port=8000                    # A (pošiljatelj) = okruženje Local
+    php artisan migrate:fresh --env=peer --force     # B: svježa peer.sqlite baza
+    php artisan serve --port=8002 --env=peer         # B (primatelj)  = okruženje Peer
+
+  B ide preko `.env.peer` (`DB_DATABASE=database/peer.sqlite`, terminalni prijem
+  bez daljeg prosljeđivanja). A automatski POST-a na peer inbox
+  `http://localhost:8002/api/as4/inbox` (`AS4_DEFAULT_PEER_URL`).
+
+  Isti OIB-ovi rade — baze su odvojene, pa `unique:parties,oib` ne sudara A i B.
+  Štoviše, kupac **mora** imati isti OIB na obje strane: inbox odbija poruku
+  (`EBMS:0005`) ako `to_oib` nije registriran na B. Dobavljača ne treba ručno
+  raditi na B — inbound ingest ga sam kreira iz UBL-a (`firstOrCreate`); samo
+  kupac mora unaprijed postojati. (Napomena: unutar iste instance ponovni
+  `Create Party` s postojećim OIB-om vrati `422` — party već postoji.)
+
+  Koraci:
+
+  1. Okruženje **Peer** → `Create Party` za kupca (`buyer_oib`).
+  2. Okruženje **Local** → `Create Invoice` → `Update Status` na `queued`
+     (generira potpisani UBL) → ovaj `Deliver Invoice (AS4)`.
+  3. Okruženje **Peer** → `List Invoices` → račun se pojavi kao
+     `inbound` / `received`.
+
+  Prebacivanje između A i B je samo promjena okruženja (`base_url`); `peer_url`
+  drži drugu stranu za referencu. Za automatiziranu inačicu vidi
+  `tests/Integration/TwoInstanceRoundTripTest.php`.
 }

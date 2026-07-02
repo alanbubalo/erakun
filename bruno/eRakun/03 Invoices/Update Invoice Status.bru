@@ -27,9 +27,9 @@ docs {
   - `sent -> delivered | rejected`
   - `received -> delivered | rejected`
   - `delivered`, `rejected` su završni (bez prijelaza)
-
+  
   Nedozvoljen prijelaz vraća grešku.
-
+  
   Prijelaz `draft -> queued` (samo za `outbound`) je onaj koji **generira i
   potpisuje UBL** te ga sprema na račun — tek nakon toga *Get Invoice XML* vraća
   potpisani dokument, a *Deliver* ima što slati. Ako stavka nosi KPD kod izvan

@@ -37,4 +37,27 @@ docs {
   Odgovor je AS4 Receipt (SOAP). U normalnom radu ga ne zoveš ručno — poziva ga
   suprotna strana kad ti šalje račun. Uključeno radi cjelovitosti sučelja i
   demonstracije round-tripa između dvije lokalne instance.
+
+  Prazan skeleton u body-ju namjerno pada (XSD/potpis). Prava poruka je potpisana
+  WS-Security envelope s potpisanim UBL-om unutra — ne možeš je složiti ručno.
+  Za pravi prijem koristi `Deliver Invoice (AS4)`: A ju složi i sam POST-a na
+  B-ov inbox.
+
+  ## Ručni replay (jedina smislena ručna upotreba)
+
+  Možeš uzeti **pravu** envelope koju je A već složio i POST-ati je na B-ov inbox.
+  Pošto B tu poruku već ima (tako je i primio račun), pogađaš idempotentni put:
+  inbox po `MessageId` vrati **isti** `eb:Receipt` (`200`), bez dupliciranja
+  računa. Demonstracija idempotentnosti prijema.
+
+  1. Izvuci envelope iz A-jeve baze (instanca na :8000):
+
+       php artisan tinker --execute="echo App\Models\As4Message::where('direction','outbound')->where('state','acknowledged')->latest('id')->value('envelope_xml');"
+
+  2. Zalijepi ispis u body ovog requesta (zamijeni skeleton).
+  3. Okruženje **Peer** (da gađa `:8002`) → pošalji → dobiješ `eb:Receipt`.
+
+  Svježi prijem ne možeš demonstrirati ovako: envelope nastaje tek pri dostavi
+  (`SubmitAs4Delivery`), pa svaka koju uhvatiš već ima `message_id` koji B
+  poznaje → uvijek replay. Za svježi prijem koristi `Deliver Invoice (AS4)`.
 }

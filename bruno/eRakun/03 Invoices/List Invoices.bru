@@ -5,14 +5,14 @@ meta {
 }
 
 get {
-  url: {{base_url}}/invoices?direction=outbound&status=draft
+  url: {{base_url}}/invoices
   body: none
   auth: none
 }
 
 params:query {
-  direction: outbound
-  status: draft
+  ~direction: outbound
+  ~status: draft
   ~supplier_oib: {{supplier_oib}}
   ~buyer_oib: {{buyer_oib}}
 }
@@ -21,11 +21,26 @@ headers {
   Accept: application/json
 }
 
+script:post-response {
+  if (res.getStatus() === 200) {
+    const invoices = res.getBody().data;
+    if (Array.isArray(invoices) && invoices.length > 0) {
+      bru.setEnvVar("invoice_id", invoices[0].id);
+    }
+  }
+}
+
 docs {
   Popis računa s opcionalnim filterima (svi `sometimes`):
   - `status`: `draft|queued|sent|received|delivered|rejected`
   - `direction`: `outbound|inbound`
   - `supplier_oib` / `buyer_oib`: 11 znamenki
-  
+
   Filtri označeni s `~` su isključeni; uključi ih po potrebi.
+
+  Na uspjeh sprema `data[0].id` u `invoice_id` (ako lista nije prazna), pa ga
+  `Get Invoice` i ostali requesti odmah mogu koristiti. Napomena: na strani
+  primatelja (okruženje Peer) primljeni je račun `inbound`/`received`, pa
+  postavi `direction=inbound` i `status=received` (ili makni filtre) da se
+  uopće pojavi u listi.
 }
