@@ -27,17 +27,22 @@ body:xml {
 
 docs {
   Zaprima dolazni eRačun kao sirovi UBL XML (`Content-Type: application/xml`).
-  Posrednik validira UBL/HR-CIUS **i potpis**, parsira ga i pohranjuje kao
-  `inbound` račun (status `received`).
-  
-  - 201/200: zaprimljeno (200 ako račun već postoji — idempotentno po broju/dobavljaču).
-  - 422: nevažeći UBL ili **nedostaje potpis**.
-  
-  ⚠️ Priloženo tijelo je strukturni HR-CIUS uzorak iz repoa
-  (`tests/Fixtures/ubl/valid-hr-cius.xml`) i **nije potpisano**, pa kako jest
-  vraća `422 "The document carries no ds:Signature."`. Endpoint očekuje
-  **potpisani** UBL. Da ga demonstriraš:
-  1. na pošiljateljskoj instanci kreiraj račun i prebaci ga u `queued`,
-  2. dohvati potpisani XML kroz *Get Invoice XML*,
-  3. zalijepi ga ovdje (po mogućnosti na drugoj instanci / peeru).
+  Ovo je ručni **dokumentni** unos — isti potpisani UBL koji preko AS4 transporta
+  stiže na `/as4/inbox`, samo bez SOAP/AS4 omotača. Posrednik validira UBL/HR-CIUS
+  **i potpis**, parsira ga i pohranjuje kao `inbound` račun (status `received`).
+
+  - 201: novi inbound račun kreiran.
+  - 200: inbound račun već postoji — idempotentno po dobavljaču + kupcu + broju
+    **za smjer `inbound`**.
+  - 422: nevažeći UBL ili nevaljan/nedostajući potpis.
+
+  Priloženo tijelo je **potpisani** HR-CIUS uzorak (`RN-2026-00042`, XAdES-B
+  `ds:Signature` izdana od test CA), pa prolazi kako jest. Ne pretty-printaj ga —
+  promjena razmaka razbija digest i vraća 422. Alternativa: zalijepi svjež
+  potpisani XML iz *Get Invoice XML*.
+
+  ⚠️ Pozivaj ga na **peeru** (primatelju). Dedup gleda samo `inbound` zapise, pa
+  na pošiljatelju — koji isti račun već drži kao `outbound` — ovo kreira **drugi**
+  (inbound) zapis (`201`), a ne idempotentni `200`. Na peeru, gdje je račun stigao
+  AS4-om, vraća `200`.
 }
